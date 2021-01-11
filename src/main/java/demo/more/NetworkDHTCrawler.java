@@ -95,6 +95,7 @@ public class NetworkDHTCrawler {
 			os = new DataOutputStream(clientSocket.getOutputStream());
 			os.writeBytes(json);
 			System.out.println(json);
+			System.out.println("Total nodes:"+NetworkDHTCrawler.nodes.size());
 			int i = 0;
 			is = clientSocket.getInputStream();
 			while((i = is.read(cbuf))>0) {

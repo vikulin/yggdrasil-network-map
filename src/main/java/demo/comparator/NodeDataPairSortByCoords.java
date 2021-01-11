@@ -12,17 +12,20 @@ public class NodeDataPairSortByCoords implements Comparator<NodeDataPair> {
 		if(delta!=0) {
 			return delta;
 		}
-		if(n1.getNodeData().getCoords().equals("[]")) {
-			return n1.getNodeData().getCoords().compareTo(n2.getNodeData().getCoords());
+		if(n1.getNodeData().getCoords().equals(n2.getNodeData().getCoords())) {
+			return 0;
 		} 
-		if(n2.getNodeData().getCoords().equals("[]")) {
-			return n1.getNodeData().getCoords().compareTo(n2.getNodeData().getCoords());
-		}
 
 		String[] array2 = n2.getNodeData().getCoords().substring(1, n2.getNodeData().getCoords().length()-1).split(" ");
 		String[] array1 = n1.getNodeData().getCoords().substring(1, n1.getNodeData().getCoords().length()-1).split(" ");
 		int size = array2.length;
 		for(int index = 0; index<size; index++) {
+			if(array1[index].equals("")) {
+				array1[index]="0";
+			}
+			if(array2[index].equals("")) {
+				array2[index]="0";
+			}
 			int value = Integer.parseInt(array1[index])-Integer.parseInt(array2[index]);
 			if(value!=0) {
 				return value;
