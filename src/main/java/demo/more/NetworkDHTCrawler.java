@@ -11,6 +11,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
@@ -21,13 +23,12 @@ import java.util.concurrent.Future;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.Ordering;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 
-import demo.comparator.NodeDataSortByCoords;
-import demo.map.ValueComparableMap;
+import demo.comparator.NodeDataPairSortByCoords;
+import demo.node.NodeDataPair;
 
 public class NetworkDHTCrawler {
 	
@@ -41,7 +42,7 @@ public class NetworkDHTCrawler {
 	
 	private static Queue<Future<Map<String, NodeData>>> queue = null;
 	
-	public static Map<String, NodeData> nodes = new ValueComparableMap<String, NodeData>(Ordering.from(new NodeDataSortByCoords()));
+	public static Set<NodeDataPair> nodes = new TreeSet<NodeDataPair>(new NodeDataPairSortByCoords());
 	
 	private void run(String json, Class<?> class_) {
 
@@ -66,10 +67,12 @@ public class NetworkDHTCrawler {
 				}
 				final Map<String, NodeData> nodes = nodesReponse.getResponse().getNodes();
 				for(final Entry<String, NodeData> nodeEntry:nodes.entrySet()) {
-					if(NetworkDHTCrawler.nodes.get(nodeEntry.getKey())!=null) {
+					//duplicated values are checked by Set
+					if(NetworkDHTCrawler.nodes.contains(new NodeDataPair(nodeEntry.getKey(), nodeEntry.getValue()))) {
 						continue;
 					}
-					nodes.put(nodeEntry.getKey(), nodeEntry.getValue());
+					NetworkDHTCrawler.nodes.add(new NodeDataPair(nodeEntry.getKey(), nodeEntry.getValue()));
+					//nodes.put(nodeEntry.getKey(), nodeEntry.getValue());
 					final String nodeJson = new ApiRequest().dhtPing(nodeEntry.getValue().getBox_pub_key(), nodeEntry.getValue().getCoords()).serialize();
 					NetworkDHTCrawler.this.run(nodeJson, ApiNodesResponse.class);
 				}
@@ -91,8 +94,6 @@ public class NetworkDHTCrawler {
 			clientSocket = new Socket(ADMIN_API_HOST, ADMIN_API_PORT);
 			os = new DataOutputStream(clientSocket.getOutputStream());
 			os.writeBytes(json);
-			Thread.sleep(1000);
-			os.writeBytes("\n");
 			System.out.println(json);
 			int i = 0;
 			is = clientSocket.getInputStream();
@@ -142,8 +143,9 @@ public class NetworkDHTCrawler {
 		}
 		//String json = new ApiRequest().dhtPing("5db525ea8fa6d3f20b5bb3d6d810f047ca447987e177532f78ed01713f459414", "[1 13]").serialize();
 		Map<String, NodeData> localDHT = dhtReponse.getResponse().getDht();
-		nodes.putAll(localDHT);
+		
 		for(Entry<String, NodeData> dhtEntry:localDHT.entrySet()) {
+			nodes.add(new NodeDataPair(dhtEntry.getKey(), dhtEntry.getValue()));
 			if(dhtEntry.getValue().getCoords().equals("[1]")) {
 				//skip self looping
 				continue;
@@ -153,7 +155,10 @@ public class NetworkDHTCrawler {
 		}
 		for(Future<Map<String, NodeData>> item:queue) {
 			try {
-				nodes.putAll(item.get());
+				Map<String, NodeData> map = item.get();
+				//for(Entry<String, NodeData> node:map.entrySet()) {
+				//	nodes.add(new NodeDataPair(node.getKey(), node.getValue()));
+				//}
 			} catch (IllegalArgumentException e) {
 				e.printStackTrace();
 			}
@@ -163,5 +168,6 @@ public class NetworkDHTCrawler {
 		    gson.toJson(nodes, writer);
 		}
 		System.out.println("done");
+		threadPool.shutdownNow();
 	}
 }
