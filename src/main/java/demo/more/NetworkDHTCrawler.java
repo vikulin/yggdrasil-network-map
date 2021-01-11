@@ -11,23 +11,17 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.Ordering;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
-
-import demo.comparator.NodeDataSortByCoords;
-import demo.map.ValueComparableMap;
 
 public class NetworkDHTCrawler {
 	
@@ -37,45 +31,42 @@ public class NetworkDHTCrawler {
 	
 	private static final int ADMIN_API_PORT=9001;
 	
-	private static ExecutorService threadPool = Executors.newFixedThreadPool(10);
+	private static ExecutorService threadPool = Executors.newFixedThreadPool(1);
 	
-	private static Queue<Future<Map<String, NodeData>>> queue = null;
+	private static Queue<Map<String, NodeData>> queue = null;
 	
-	public static Map<String, NodeData> nodes = new ValueComparableMap<String, NodeData>(Ordering.from(new NodeDataSortByCoords()));
+	public static Map<String, NodeData> nodes = new HashMap<String, NodeData>();
 	
 	private void run(String json, Class<?> class_) {
+		
+		log.info("found: "+nodes.size()+" records");
+		final ApiNodesResponse nodesReponse = (ApiNodesResponse)apiRequest(json, class_);
+		if(nodesReponse==null) {
+			return;
+		}
+		if(nodesReponse.getResponse()==null) {
+			Gson gson = new Gson();
+			log.info("incorrect response: "+gson.toJson(nodesReponse));
+			return;
+		}
+		if(nodesReponse.getResponse().getNodes()==null) {
+			Gson gson = new Gson();
+			log.info("incorrect response: "+gson.toJson(nodesReponse));
+			return;
+		}
+		
+		final Map<String, NodeData> tmp = new HashMap<String,NodeData>(nodesReponse.getResponse().getNodes());
+		for(final Entry<String, NodeData> nodeEntry:tmp.entrySet()) {
+			if(NetworkDHTCrawler.nodes.get(nodeEntry.getKey())!=null) {
+				continue;
+			}
+			NetworkDHTCrawler.nodes.put(nodeEntry.getKey(), nodeEntry.getValue());
+			//tmp.put(nodeEntry.getKey(), nodeEntry.getValue());
+			final String nodeJson = new ApiRequest().dhtPing(nodeEntry.getValue().getBox_pub_key(), nodeEntry.getValue().getCoords()).serialize();
+			NetworkDHTCrawler.this.run(nodeJson, ApiNodesResponse.class);
+		}
 
-		queue.add(threadPool.submit(new Callable<Map<String, NodeData>>() {
-			
-			@Override
-			public Map<String, NodeData> call() throws Exception {
-				log.info("found: "+nodes.size()+" records");
-				final ApiNodesResponse nodesReponse = (ApiNodesResponse)apiRequest(json, class_);
-				if(nodesReponse==null) {
-					return new HashMap<String, NodeData>();
-				}
-				if(nodesReponse.getResponse()==null) {
-					Gson gson = new Gson();
-					log.info("incorrect response: "+gson.toJson(nodesReponse));
-					return new HashMap<String, NodeData>();
-				}
-				if(nodesReponse.getResponse().getNodes()==null) {
-					Gson gson = new Gson();
-					log.info("incorrect response: "+gson.toJson(nodesReponse));
-					return new HashMap<String, NodeData>();
-				}
-				final Map<String, NodeData> nodes = nodesReponse.getResponse().getNodes();
-				for(final Entry<String, NodeData> nodeEntry:nodes.entrySet()) {
-					if(NetworkDHTCrawler.nodes.get(nodeEntry.getKey())!=null) {
-						continue;
-					}
-					nodes.put(nodeEntry.getKey(), nodeEntry.getValue());
-					final String nodeJson = new ApiRequest().dhtPing(nodeEntry.getValue().getBox_pub_key(), nodeEntry.getValue().getCoords()).serialize();
-					NetworkDHTCrawler.this.run(nodeJson, ApiNodesResponse.class);
-				}
-				return nodes;
-			}    
-		}));
+		//queue.add(tmp);
 	}
 	
 	
@@ -91,9 +82,9 @@ public class NetworkDHTCrawler {
 			clientSocket = new Socket(ADMIN_API_HOST, ADMIN_API_PORT);
 			os = new DataOutputStream(clientSocket.getOutputStream());
 			os.writeBytes(json);
-			Thread.sleep(1000);
-			os.writeBytes("\n");
 			System.out.println(json);
+			//Thread.sleep(2000);
+			//os.writeBytes("\n");
 			int i = 0;
 			is = clientSocket.getInputStream();
 			while((i = is.read(cbuf))>0) {
@@ -133,7 +124,7 @@ public class NetworkDHTCrawler {
 	}
 	
 	public static void main(String args[]) throws InterruptedException, ExecutionException, IOException {
-		queue = new ConcurrentLinkedQueue<Future<Map<String, NodeData>>>();
+		queue = new ConcurrentLinkedQueue<Map<String, NodeData>>();
 		String json = new ApiRequest().getDHT().serialize();
 		NetworkDHTCrawler crawler = new NetworkDHTCrawler();
 		ApiDHTResponse dhtReponse = (ApiDHTResponse)crawler.apiRequest(json, ApiDHTResponse.class);
@@ -151,13 +142,14 @@ public class NetworkDHTCrawler {
 			String nodeJson = new ApiRequest().dhtPing(dhtEntry.getValue().getBox_pub_key(), dhtEntry.getValue().getCoords()).serialize();
 			crawler.run(nodeJson, ApiNodesResponse.class);
 		}
-		for(Future<Map<String, NodeData>> item:queue) {
+		/*
+		for(Map<String, NodeData> item:queue) {
 			try {
-				nodes.putAll(item.get());
+				nodes.putAll(item);
 			} catch (IllegalArgumentException e) {
 				e.printStackTrace();
 			}
-		}
+		}*/
 		try (Writer writer = new FileWriter("nodes.json")) {
 		    Gson gson = new GsonBuilder().setPrettyPrinting().create();
 		    gson.toJson(nodes, writer);
