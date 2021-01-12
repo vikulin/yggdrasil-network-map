@@ -21,7 +21,7 @@ public class NodeData2JSGraphConverter {
 		
 		StringBuilder sb = new StringBuilder();
 		String beginNodes = "var nodes = [\n";
-		String rowNodes = "{id: %d, label: %s, title: %s, value: %d, group: %d},\n";
+		String rowNodes = "{id: %d, label: \"%s\", title: \"%s\", value: %d, group: %d},\n";
 		String rowEdges = "{from: %d, to: %d},\n";
 		String endNodes = "];\n";
 		sb.append(beginNodes);
