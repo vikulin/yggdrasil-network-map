@@ -1,10 +1,10 @@
 package demo.more;
 
-import java.util.ArrayList;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Writer;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import demo.node.NodeDataPair;
@@ -15,11 +15,10 @@ import demo.node.NodeDataPair;
  */
 public class NodeData2JSGraphConverter {
 	
-	private List<EdgeData> edgeData = new ArrayList<EdgeData>();
-	
-	private Map<String, Long> coordinatesById = new HashMap<String, Long>();
-	
-	public void createJs(Set<NodeDataPair> nodes) {
+	public static void createJs(Set<NodeDataPair> nodes) throws IOException {
+
+		Map<String, Long> idByCoordinates = new HashMap<String, Long>();
+		
 		StringBuilder sb = new StringBuilder();
 		String beginNodes = "var nodes = [\n";
 		String rowNodes = "{id: %d, label: %s, title: %s, value: %d, group: %d},\n";
@@ -28,7 +27,7 @@ public class NodeData2JSGraphConverter {
 		sb.append(beginNodes);
 		
 		for(NodeDataPair n:nodes) {
-			String coords = n.getNodeData().getCoords().substring(1, n.getNodeData().getCoords().length());
+			String coords = n.getNodeData().getCoords().substring(1, n.getNodeData().getCoords().length()-1);
 			int group = coords.split(" ").length;
 			int value;
 			if(group>=20) {
@@ -37,29 +36,44 @@ public class NodeData2JSGraphConverter {
 				value = 30-group;
 			}
 			sb.append(String.format(rowNodes, n.getId(), n.getNodeData().getBox_pub_key(), coords, value, group));
-			coordinatesById.put(coords, n.getId());
+			idByCoordinates.put(coords, n.getId());
 		}
 		sb.append(endNodes);
 		String beginEdges = "var edges = [\n";
 		sb.append(beginEdges);
 		for(NodeDataPair n:nodes) {
-			String coords = n.getNodeData().getCoords().substring(1, n.getNodeData().getCoords().length());
-			int index = coords.lastIndexOf(' ');
-			if(index<0 && !coords.equals("")) {
-				sb.append(String.format(rowEdges, coordinatesById.get(""), coordinatesById.get(coords)));
+			String coords = n.getNodeData().getCoords().substring(1, n.getNodeData().getCoords().length()-1);
+			if(coords.equals("")) {
 				continue;
 			}
+			int index = coords.lastIndexOf(' ');
+			if(index<0) {
+				sb.append(String.format(rowEdges, idByCoordinates.get(""), idByCoordinates.get(coords)));
+				continue;
+			}
+			
 			String from = coords.substring(0, index);
-			sb.append(String.format(rowEdges, coordinatesById.get(from), coordinatesById.get(coords)));
+			Long idFrom = idByCoordinates.get(from);
+			//skip null. it occurs when parent coords are unknown
+			if(idFrom!=null) {
+				sb.append(String.format(rowEdges, idFrom, idByCoordinates.get(coords)));
+			}
 		}
 		String endEdges = "];";
 		sb.append(endEdges);
+		
+		try (Writer writer = new FileWriter("graph-data.js")) {
+		    writer.append(sb.toString());
+		}
 	}
 	
 	public static void main(String[] args) {
-		int index = "1 2 3 4".lastIndexOf(' ');
-		System.out.println("1 2 3 4".substring(index+1));
-		System.out.println("1 2 3 4".substring(0, index));
+		String coords = "1 2";
+		int index = coords.lastIndexOf(' ');
+		System.out.println(coords.substring(0, index));
+		System.out.println(coords.substring(0, index).length());
+		System.out.println(coords.substring(index+1));
+		
 	}
 	
 }
