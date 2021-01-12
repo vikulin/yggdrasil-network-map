@@ -120,21 +120,19 @@ public class NetworkDHTCrawler {
 		Gson gson = new Gson();
 		Object apiReponse = null;
 		try {
-			//System.out.println(response);
 			apiReponse = gson.fromJson(response, class_);
-			//System.out.println(gson.toJson(apiReponse));
 		} catch(JsonSyntaxException e) {
 			e.printStackTrace();
 			System.out.println(response);
 		}
 		if(apiReponse==null) {
 			System.out.println("No response received");
-			//System.exit(-1);
 		}
 		return apiReponse;
 	}
 	
 	public static void main(String args[]) throws InterruptedException, ExecutionException, IOException {
+		
 		queue = new ConcurrentLinkedQueue<Future<Map<String, NodeData>>>();
 		String json = new ApiRequest().getDHT().serialize();
 		NetworkDHTCrawler crawler = new NetworkDHTCrawler();
@@ -147,22 +145,20 @@ public class NetworkDHTCrawler {
 		
 		for(Entry<String, NodeData> dhtEntry:localDHT.entrySet()) {
 			nodes.add(new NodeDataPair(dhtEntry.getKey(), dhtEntry.getValue()));
-			if(dhtEntry.getValue().getCoords().equals("[1]")) {
-				//skip self looping
-				continue;
-			}
 			String nodeJson = new ApiRequest().dhtPing(dhtEntry.getValue().getBox_pub_key(), dhtEntry.getValue().getCoords()).serialize();
 			crawler.run(nodeJson, ApiNodesResponse.class);
 		}
 		for(Future<Map<String, NodeData>> item:queue) {
 			try {
 				Map<String, NodeData> map = item.get();
-				//for(Entry<String, NodeData> node:map.entrySet()) {
-				//	nodes.add(new NodeDataPair(node.getKey(), node.getValue()));
-				//}
 			} catch (IllegalArgumentException e) {
 				e.printStackTrace();
 			}
+		}
+		long id = 1;
+		for(NodeDataPair ndp:NetworkDHTCrawler.nodes) {
+			ndp.setId(id);
+			id++;
 		}
 		try (Writer writer = new FileWriter("nodes.json")) {
 		    Gson gson = new GsonBuilder().setPrettyPrinting().create();

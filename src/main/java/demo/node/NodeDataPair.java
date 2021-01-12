@@ -5,6 +5,8 @@ import demo.more.NodeData;
 
 public class NodeDataPair implements Comparable<NodeDataPair> {
 	
+	private Long id;
+	
 	private String ip;
 	
 	private NodeData nodeData;
@@ -13,7 +15,7 @@ public class NodeDataPair implements Comparable<NodeDataPair> {
 		this.ip = ip;
 		this.nodeData = nodeData;
 	}
-
+	
 	public String getIp() {
 		return ip;
 	}
@@ -30,6 +32,14 @@ public class NodeDataPair implements Comparable<NodeDataPair> {
 		this.nodeData = nodeData;
 	}
 	
+	public Long getId() {
+		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
+	}
+
 	@Override
 	public boolean equals(Object obj) {
 		return this.nodeData.getCoords()!=null && obj instanceof NodeDataPair && this.nodeData.getCoords().equals(((NodeDataPair)obj).getNodeData().getCoords());
