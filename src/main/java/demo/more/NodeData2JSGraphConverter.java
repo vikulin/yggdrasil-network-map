@@ -21,21 +21,24 @@ public class NodeData2JSGraphConverter {
 		
 		StringBuilder sb = new StringBuilder();
 		String beginNodes = "var nodes = [\n";
-		String rowNodes = "{id: %d, label: \"%s\", title: \"%s\", value: %d, group: %d},\n";
+		String rowNodes = "{id: %d, label: \"%s\", title: \"IP:%s\", value: %d, group: %d},\n";
 		String rowEdges = "{from: %d, to: %d},\n";
 		String endNodes = "];\n";
 		sb.append(beginNodes);
 		
 		for(NodeDataPair n:nodes) {
 			String coords = n.getNodeData().getCoords().substring(1, n.getNodeData().getCoords().length()-1);
-			int group = coords.split(" ").length;
+			int group = 0;
+			if(!coords.equals("")) {
+				group = coords.split(" ").length;
+			}
 			int value;
-			if(group>=20) {
+			if(group>3) {
 				value = 10;
 			} else {
-				value = 30-group;
+				value = (int) (128/Math.pow(2,group));
 			}
-			sb.append(String.format(rowNodes, n.getId(), n.getNodeData().getBox_pub_key(), coords, value, group));
+			sb.append(String.format(rowNodes, n.getId(), coords, n.getIp(), value, group));
 			idByCoordinates.put(coords, n.getId());
 		}
 		sb.append(endNodes);
@@ -73,7 +76,10 @@ public class NodeData2JSGraphConverter {
 		System.out.println(coords.substring(0, index));
 		System.out.println(coords.substring(0, index).length());
 		System.out.println(coords.substring(index+1));
-		
+		int value;
+		int group = 3; 
+		value = (int) (128/Math.pow(2,group));
+		System.out.println(value);
 	}
 	
 }
