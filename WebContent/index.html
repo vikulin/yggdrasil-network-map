@@ -16,8 +16,8 @@
 
     <style type="text/css">
       #mynetwork {
-        width: 800px;
-        height: 800px;
+        width: 1100px;
+        height: 1100px;
         border: 1px solid lightgray;
       }
     </style>
@@ -53,20 +53,22 @@
             shape: "dot",
             size: 16,
           },
-	  font: {
-	     multi: true,
-	  },
+	main: {
+          style: "html",
+	},
+
+
           physics: {
             forceAtlas2Based: {
-              gravitationalConstant: -26,
-              centralGravity: 0.005,
-              springLength: 230,
-              springConstant: 0.18,
+              gravitationalConstant: -126,
+              centralGravity: 0.01,
+              springLength: 70,
+              springConstant: 5.15,
             },
-            maxVelocity: 146,
+            maxVelocity: 1746,
             solver: "forceAtlas2Based",
-            timestep: 0.35,
-            stabilization: { iterations: 15 },
+            timestep: 0.085,
+            stabilization: { iterations: 30 },
           },
         };
 
