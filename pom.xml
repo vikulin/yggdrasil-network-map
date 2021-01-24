@@ -1,54 +1,56 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>yggdrasil-network-map</groupId>
-  <artifactId>yggdrasil-network-map</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
-  <packaging>war</packaging>
-  
-  	<properties>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>yggdrasil-network-map</groupId>
+	<artifactId>yggdrasil-network-map</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<packaging>war</packaging>
+
+	<properties>
 		<zk-version>9.5.0.2-Eval</zk-version>
 	</properties>
-  
-  <repositories>
-	<repository>
-		<id>maven</id>
-		<url>https://repo1.maven.org/maven2/</url>
-	</repository>
-	<repository>
-		<id>ZK EE</id>
-		<url>https://mavensync.zkoss.org/maven2</url>
-	</repository>
-	<repository>
-		<id>ZK PE Evaluation</id>
-		<url>http://mavensync.zkoss.org/zk/pe-eval</url>
-	</repository>
-	<repository>
-		<id>ZK EE Evaluation</id>
-		<url>http://mavensync.zkoss.org/zk/ee-eval</url>
-	</repository>
-	<repository>
-		<id>com.springsource.repository.bundles.release</id>
-		<name>SpringSource Enterprise Bundle Repository - SpringSource Releases</name>
-		<url>http://repository.springsource.com/maven/bundles/release</url>
-	</repository>
 
-	<repository>
-		<id>com.springsource.repository.bundles.external</id>
-		<name>SpringSource Enterprise Bundle Repository - External Releases</name>
-		<url>http://repository.springsource.com/maven/bundles/external</url>
-	</repository>
-  </repositories>
-  
-  <dependencies>
-  
-  <!-- ZK -->
-		
-		
+	<repositories>
+		<repository>
+			<id>maven</id>
+			<url>https://repo1.maven.org/maven2/</url>
+		</repository>
+		<repository>
+			<id>ZK EE</id>
+			<url>https://mavensync.zkoss.org/maven2</url>
+		</repository>
+		<repository>
+			<id>ZK PE Evaluation</id>
+			<url>http://mavensync.zkoss.org/zk/pe-eval</url>
+		</repository>
+		<repository>
+			<id>ZK EE Evaluation</id>
+			<url>http://mavensync.zkoss.org/zk/ee-eval</url>
+		</repository>
+		<repository>
+			<id>com.springsource.repository.bundles.release</id>
+			<name>SpringSource Enterprise Bundle Repository - SpringSource Releases</name>
+			<url>http://repository.springsource.com/maven/bundles/release</url>
+		</repository>
+
+		<repository>
+			<id>com.springsource.repository.bundles.external</id>
+			<name>SpringSource Enterprise Bundle Repository - External Releases</name>
+			<url>http://repository.springsource.com/maven/bundles/external</url>
+		</repository>
+	</repositories>
+
+	<dependencies>
+
+		<!-- ZK -->
+
+
 		<dependency>
-	      <groupId>org.zkoss.zk</groupId>
-	      <artifactId>zkmax</artifactId>
-	      <version>${zk-version}</version>
-	    </dependency>
+			<groupId>org.zkoss.zk</groupId>
+			<artifactId>zkmax</artifactId>
+			<version>${zk-version}</version>
+		</dependency>
 		<dependency>
 			<groupId>org.zkoss.zk</groupId>
 			<artifactId>zkplus</artifactId>
@@ -74,44 +76,62 @@
 			<artifactId>zuti</artifactId>
 			<version>${zk-version}</version>
 		</dependency>
-		
+
 		<dependency>
-		    <groupId>org.zkoss.theme</groupId>
-		    <artifactId>iceblue_c</artifactId>
-		    <version>${zk-version}</version>
+			<groupId>org.zkoss.theme</groupId>
+			<artifactId>iceblue_c</artifactId>
+			<version>${zk-version}</version>
 		</dependency>
-		
+
 		<dependency>
-		    <groupId>org.zkoss.chart</groupId>
-		    <artifactId>zkcharts</artifactId>
-		    <version>7.2.1.1-FL-20200422-Eval</version>
+			<groupId>org.zkoss.chart</groupId>
+			<artifactId>zkcharts</artifactId>
+			<version>7.2.1.1-FL-20200422-Eval</version>
 		</dependency>
-		
+
 		<!-- https://mvnrepository.com/artifact/com.google.collections/google-collections -->
 		<dependency>
-		    <groupId>com.google.collections</groupId>
-		    <artifactId>google-collections</artifactId>
-		    <version>1.0</version>
+			<groupId>com.google.collections</groupId>
+			<artifactId>google-collections</artifactId>
+			<version>1.0</version>
 		</dependency>
-  
-  </dependencies>
-  
-  <build>
-    <plugins>
-      <plugin>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.8.0</version>
-        <configuration>
-          <release>11</release>
-        </configuration>
-      </plugin>
-      <plugin>
-        <artifactId>maven-war-plugin</artifactId>
-        <version>3.2.3</version>
-        <configuration>
-          <warSourceDirectory>WebContent</warSourceDirectory>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
+
+		<dependency>
+			<groupId>org.graphstream</groupId>
+			<artifactId>gs-core</artifactId>
+			<version>2.0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.graphstream</groupId>
+			<artifactId>gs-algo</artifactId>
+			<version>2.0</version>
+		</dependency>
+		
+	<dependency>
+        <groupId>org.graphstream</groupId>
+        <artifactId>gs-ui-swing</artifactId>
+        <version>2.0</version>
+    </dependency>
+
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.8.0</version>
+				<configuration>
+					<release>11</release>
+				</configuration>
+			</plugin>
+			<plugin>
+				<artifactId>maven-war-plugin</artifactId>
+				<version>3.2.3</version>
+				<configuration>
+					<warSourceDirectory>WebContent</warSourceDirectory>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
 </project>

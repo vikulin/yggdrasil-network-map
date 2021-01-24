@@ -4,8 +4,18 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+
+import org.graphstream.algorithm.BetweennessCentrality;
+import org.graphstream.graph.Graph;
+import org.graphstream.graph.Node;
+import org.graphstream.graph.implementations.SingleGraph;
+import org.graphstream.ui.graphicGraph.GraphPosLengthUtils;
+import org.graphstream.ui.layout.Layout;
+import org.graphstream.ui.layout.springbox.implementations.SpringBox;
 
 import demo.node.NodeDataPair;
 
@@ -15,13 +25,58 @@ import demo.node.NodeDataPair;
  */
 public class NodeData2JSGraphConverter {
 	
-	public static void createJs(Set<NodeDataPair> nodes) throws IOException {
+	public static void createJs(Set<NodeDataPair> nodes) throws IOException, ClassNotFoundException {
 
 		Map<String, Long> idByCoordinates = new HashMap<String, Long>();
 		
+		Graph graph = new SingleGraph("Yggdrasil network");
+		  Layout layout = new SpringBox(false);
+		  graph.addSink(layout);
+		  layout.addAttributeSink(graph);
+		BetweennessCentrality bcb = new BetweennessCentrality();
+		
+		
+		for(NodeDataPair n:nodes) {
+			String coords = n.getNodeData().getCoords().substring(1, n.getNodeData().getCoords().length()-1);
+			idByCoordinates.put(coords, n.getId());
+			graph.addNode(n.getId().toString());
+		}
+		for(NodeDataPair n:nodes) {
+			String coords = n.getNodeData().getCoords().substring(1, n.getNodeData().getCoords().length()-1);
+			if(coords.equals("")) {
+				continue;
+			}
+			int index = coords.lastIndexOf(' ');
+			if(index<0) {
+				String fromId = idByCoordinates.get("").toString();
+				String toId =  idByCoordinates.get(coords).toString();
+				graph.addEdge(fromId+"-"+toId, fromId, toId);
+				continue;
+			}
+			
+			String from = coords.substring(0, index);
+			Long idFrom = idByCoordinates.get(from);
+			//skip null. it occurs when parent coords are unknown
+			if(idFrom!=null) {
+				String fromId = idFrom.toString();
+				String toId =  idByCoordinates.get(coords).toString();
+				String edgeId = fromId+"-"+toId;
+				if(graph.getEdge(edgeId)==null) {
+					graph.addEdge(edgeId, fromId, toId);
+				}
+			}
+		}
+		bcb.init(graph);
+		bcb.compute();
+		
+		  // iterate the compute() method a number of times
+		  while(layout.getStabilization() < 0.9){
+		    layout.compute();
+		  }
+		  
 		StringBuilder sb = new StringBuilder();
 		String beginNodes = "var nodes = [\n";
-		String rowNodes = "{id: %d, label: \"%s\", title: \"IP:%s\", value: %d, group: %d},\n";
+		String rowNodes = "{id: %d, label: \"%s\", title: \"IP:%s\", value: %d, group: %d, x: %.2f, y: %.2f},\n";
 		String rowEdges = "{from: %d, to: %d},\n";
 		String endNodes = "];\n";
 		sb.append(beginNodes);
@@ -32,18 +87,15 @@ public class NodeData2JSGraphConverter {
 			if(!coords.equals("")) {
 				group = coords.split(" ").length;
 			}
-			int value;
-			if(group>3) {
-				value = 10;
-			} else {
-				value = (int) (128/Math.pow(2,group));
-			}
-			sb.append(String.format(rowNodes, n.getId(), coords, n.getIp(), value, group));
-			idByCoordinates.put(coords, n.getId());
+			long value = Double.valueOf(graph.getNode(n.getId().toString()).getAttribute("Cb").toString()).longValue()/50000+5;
+			double[] coordinates = GraphPosLengthUtils.nodePosition(graph, n.getId().toString());
+			sb.append(String.format(Locale.ROOT, rowNodes, n.getId(), coords, n.getIp(), value, group, 100*coordinates[0], 100*coordinates[1]));
 		}
+		
 		sb.append(endNodes);
 		String beginEdges = "var edges = [\n";
 		sb.append(beginEdges);
+		
 		for(NodeDataPair n:nodes) {
 			String coords = n.getNodeData().getCoords().substring(1, n.getNodeData().getCoords().length()-1);
 			if(coords.equals("")) {
@@ -62,12 +114,15 @@ public class NodeData2JSGraphConverter {
 				sb.append(String.format(rowEdges, idFrom, idByCoordinates.get(coords)));
 			}
 		}
+		
 		String endEdges = "];";
 		sb.append(endEdges);
 		
 		try (Writer writer = new FileWriter("graph-data.js")) {
 		    writer.append(sb.toString());
 		}
+		
+		//graph.getNode(i).setAttribute("ui.size",Double.parseDouble(graph.getNode(i).getAttribute("Cb").toString())/50000 + 5);
 	}
 	
 	public static void main(String[] args) {
@@ -81,5 +136,10 @@ public class NodeData2JSGraphConverter {
 		value = (int) (128/Math.pow(2,group));
 		System.out.println(value);
 	}
+	
+	public static final String STYLE = "node {" + "fill-mode: dyn-plain;"
+			+ "fill-color: blue,yellow;" + "size-mode: dyn-size;"
+			+ "stroke-color: black;" + "stroke-width: 1px;"
+			+ "stroke-mode: plain;" + "}";
 	
 }

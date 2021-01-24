@@ -131,7 +131,7 @@ public class NetworkDHTCrawler {
 		return apiReponse;
 	}
 	
-	public static void main(String args[]) throws InterruptedException, ExecutionException, IOException {
+	public static void main(String args[]) throws InterruptedException, ExecutionException, IOException, ClassNotFoundException {
 		
 		queue = new ConcurrentLinkedQueue<Future<Map<String, NodeData>>>();
 		String json = new ApiRequest().getDHT().serialize();
