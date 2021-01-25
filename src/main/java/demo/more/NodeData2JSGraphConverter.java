@@ -121,7 +121,6 @@ public class NodeData2JSGraphConverter {
 			writer.append(edgesSb.toString());
 		}
 		
-		//graph.getNode(i).setAttribute("ui.size",Double.parseDouble(graph.getNode(i).getAttribute("Cb").toString())/50000 + 5);
 	}
 	
 	public static void main(String[] args) {
