@@ -25,8 +25,34 @@
 
   <body>
     <!--h2>Yggdrasil Map</h2-->
-    <div id="mynetwork"></div>
+    <input id="textId" type="text" style="position: relative; width: 300px; height: 20px; z-index: 9;"></input>
+    <button onclick="focusRandom();" style="position: relative; width: 100px; height: 30px; z-index: 9;">Search</button>
 
+    <script type="text/javascript">
+      var statusUpdateSpan;
+      var offsetx,
+        offsety,
+        scale,
+        positionx,
+        positiony,
+        duration,
+        easingFunction,
+        doButton,
+        focusButton,
+        showButton;
+
+      function updateValues() {
+        offsetx = 0;
+        offsety = 0;
+        duration = 1000;
+        scale = 1.0;
+        positionx = 500;
+        positiony = 500;
+        easingFunction = 'easeInOutQuad';
+      }
+
+    </script>
+    <div id="mynetwork"></div>
 
     <script type="text/javascript">
       var network;
@@ -36,7 +62,6 @@
       var nodesDataset = new vis.DataSet(nodes); // these come from WorldCup2014.js
       var edgesDataset = new vis.DataSet(edges); // these come from WorldCup2014.js
 
-
       function redrawAll() {
         var container = document.getElementById("mynetwork");
 
@@ -44,9 +69,6 @@
           nodes: {
             shape: "dot",
           },
-			main: {
-		          style: "html",
-			},
             physics: false,
         };
 
@@ -60,6 +82,42 @@
         network.on("click", neighbourhoodHighlight);
 
       }
+
+      function focusRandom() {
+        updateValues();
+        var textId = document.getElementById("textId").value;
+        var options = {
+          scale: scale,
+          offset: { x: offsetx, y: offsety },
+          animation: {
+            duration: duration,
+            easingFunction: easingFunction,
+          },
+        };
+        finishMessage = "Node: " + nodeId + " in focus.";
+        for (var nodeId in allNodes) {
+            if (allNodes[nodeId].label === textId) {
+               network.focus(allNodes[nodeId].id, options);
+               break;
+            }
+            if (allNodes[nodeId].title.includes(textId)) {
+               network.focus(allNodes[nodeId].id, options);
+               fireNodeSelected(allNodes[nodeId]);
+               break;
+            }
+        }       
+      }
+
+     function fireNodeSelected(node) {
+        node.color = "rgba(0,0,0,0.8)";
+        var updateArray = [];
+        for (nodeId in allNodes) {
+          if (allNodes.hasOwnProperty(nodeId)) {
+            updateArray.push(allNodes[nodeId]);
+          }
+        }
+        nodesDataset.update(updateArray);
+     }
 
       function neighbourhoodHighlight(params) {
         // if something is selected:
@@ -139,7 +197,7 @@
 
       redrawAll();
 
-
     </script>
+
   </body>
 </html>
