@@ -74,12 +74,17 @@ public class NodeData2JSGraphConverter {
 		    layout.compute();
 		  }
 		  
-		StringBuilder sb = new StringBuilder();
+		//StringBuilder sb = new StringBuilder();
+		StringBuilder nodesSb = new StringBuilder();
+		StringBuilder edgesSb = new StringBuilder();
 		String beginNodes = "var nodes = [\n";
 		String rowNodes = "{id: %d, label: \"%s\", title: \"IP:%s\", value: %d, group: %d, x: %.2f, y: %.2f},\n";
-		String rowEdges = "{from: %d, to: %d},\n";
+		String rowEdges = "{from: %d, to: %d, value: %d},\n";
 		String endNodes = "];\n";
-		sb.append(beginNodes);
+		String beginEdges = "var edges = [\n";
+		String endEdges = "];";
+		nodesSb.append(beginNodes);
+		edgesSb.append(beginEdges);
 		
 		for(NodeDataPair n:nodes) {
 			String coords = n.getNodeData().getCoords().substring(1, n.getNodeData().getCoords().length()-1);
@@ -87,23 +92,16 @@ public class NodeData2JSGraphConverter {
 			if(!coords.equals("")) {
 				group = coords.split(" ").length;
 			}
-			long value = Double.valueOf(graph.getNode(n.getId().toString()).getAttribute("Cb").toString()).longValue()/50000+5;
+			long value = Double.valueOf(graph.getNode(n.getId().toString()).getAttribute("Cb").toString()).longValue()/500+5;
 			double[] coordinates = GraphPosLengthUtils.nodePosition(graph, n.getId().toString());
-			sb.append(String.format(Locale.ROOT, rowNodes, n.getId(), coords, n.getIp(), value, group, 100*coordinates[0], 100*coordinates[1]));
-		}
-		
-		sb.append(endNodes);
-		String beginEdges = "var edges = [\n";
-		sb.append(beginEdges);
-		
-		for(NodeDataPair n:nodes) {
-			String coords = n.getNodeData().getCoords().substring(1, n.getNodeData().getCoords().length()-1);
+			nodesSb.append(String.format(Locale.ROOT, rowNodes, n.getId(), coords, n.getIp(), value, group, 100*coordinates[0], 100*coordinates[1]));
+
 			if(coords.equals("")) {
 				continue;
 			}
 			int index = coords.lastIndexOf(' ');
 			if(index<0) {
-				sb.append(String.format(rowEdges, idByCoordinates.get(""), idByCoordinates.get(coords)));
+				edgesSb.append(String.format(rowEdges, idByCoordinates.get(""), idByCoordinates.get(coords), value));
 				continue;
 			}
 			
@@ -111,15 +109,16 @@ public class NodeData2JSGraphConverter {
 			Long idFrom = idByCoordinates.get(from);
 			//skip null. it occurs when parent coords are unknown
 			if(idFrom!=null) {
-				sb.append(String.format(rowEdges, idFrom, idByCoordinates.get(coords)));
+				edgesSb.append(String.format(rowEdges, idFrom, idByCoordinates.get(coords), value));
 			}
 		}
 		
-		String endEdges = "];";
-		sb.append(endEdges);
+		nodesSb.append(endNodes);
+		edgesSb.append(endEdges);
 		
 		try (Writer writer = new FileWriter("graph-data.js")) {
-		    writer.append(sb.toString());
+			writer.append(nodesSb.toString());
+			writer.append(edgesSb.toString());
 		}
 		
 		//graph.getNode(i).setAttribute("ui.size",Double.parseDouble(graph.getNode(i).getAttribute("Cb").toString())/50000 + 5);
