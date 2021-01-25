@@ -16,26 +16,17 @@
 
     <style type="text/css">
       #mynetwork {
-        width: 1100px;
-        height: 1100px;
+	position: absolute;
+        top: 0px; right: 0px; bottom: 0px; left: 0px;
         border: 1px solid lightgray;
       }
     </style>
   </head>
 
   <body>
-    <h2>Dynamic Data - Neighbourhood Highlight</h2>
-    <div style="width: 800px; font-size: 14px">
-      This example shows the power of the DataSet. Once a node is clicked, all
-      nodes are greyed out except for the first and second order connected
-      nodes. In this example we show how you can determine the order of
-      connection per node as well as applying individual styling to the nodes
-      based on whether or not they are connected to the selected node. The code
-      doing the highlighting only takes about 1ms, the rest of the time is the
-      redrawing of the network (9200 edges..).
-      <br /><br />
+    <!--h2>Yggdrasil Map</h2-->
     <div id="mynetwork"></div>
-    </div>
+
 
     <script type="text/javascript">
       var network;
@@ -45,6 +36,7 @@
       var nodesDataset = new vis.DataSet(nodes); // these come from WorldCup2014.js
       var edgesDataset = new vis.DataSet(edges); // these come from WorldCup2014.js
 
+
       function redrawAll() {
         var container = document.getElementById("mynetwork");
 
@@ -52,18 +44,10 @@
           nodes: {
             shape: "dot",
           },
-		physics: {
-            forceAtlas2Based: {
-              gravitationalConstant: -126,
-              centralGravity: 0.01,
-              springLength: 70,
-              springConstant: 5.15,
-            },
-            maxVelocity: 1746,
-            solver: "forceAtlas2Based",
-            timestep: 0.085,
-            stabilization: { iterations: 30 },
-          },
+			main: {
+		          style: "html",
+			},
+            physics: false,
         };
 
         var data = { nodes: nodesDataset, edges: edgesDataset }; // Note: data is coming from ./datasources/WorldCup2014.js
@@ -74,6 +58,7 @@
         allNodes = nodesDataset.get({ returnType: "Object" });
 
         network.on("click", neighbourhoodHighlight);
+
       }
 
       function neighbourhoodHighlight(params) {
@@ -153,6 +138,8 @@
       }
 
       redrawAll();
+
+
     </script>
   </body>
 </html>
