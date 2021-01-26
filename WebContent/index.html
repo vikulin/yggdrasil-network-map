@@ -94,15 +94,19 @@
             easingFunction: easingFunction,
           },
         };
-        finishMessage = "Node: " + nodeId + " in focus.";
+        finishMessage = "Node: " + textId + " in focus.";
+        console.log(finishMessage);
         for (var nodeId in allNodes) {
             if (allNodes[nodeId].label === textId) {
                network.focus(allNodes[nodeId].id, options);
+               fireNodeSelected(allNodes[nodeId]);
+               console.log(allNodes[nodeId].label);
                break;
             }
-            if (allNodes[nodeId].title.includes(textId)) {
+            if (allNodes[nodeId].title === 'IP:'.concat(textId)) {
                network.focus(allNodes[nodeId].id, options);
                fireNodeSelected(allNodes[nodeId]);
+               console.log(allNodes[nodeId].title);
                break;
             }
         }       
