@@ -78,7 +78,7 @@ public class NodeData2JSGraphConverter {
 		StringBuilder nodesSb = new StringBuilder();
 		StringBuilder edgesSb = new StringBuilder();
 		String beginNodes = "var nodes = [\n";
-		String rowNodes = "{id: %d, label: \"%s\", title: \"IP:%s\", value: %d, group: %d, x: %.2f, y: %.2f},\n";
+		String rowNodes = "{id: %d, label: \"%s\", title: \"%s\", value: %d, group: %d, x: %.2f, y: %.2f},\n";
 		String rowEdges = "{from: %d, to: %d, value: %d},\n";
 		String endNodes = "];\n";
 		String beginEdges = "var edges = [\n";
