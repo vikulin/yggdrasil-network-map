@@ -21,6 +21,13 @@ public class ApiRequest {
 		return this;
 	}
 	
+	public ApiRequest dhtPing(NodeData nodeData){
+		map.put("request", "dhtPing");
+		map.put("box_pub_key", nodeData.getBox_pub_key());
+		map.put("coords", nodeData.getCoords());
+		return this;
+	}
+	
 	public String serialize() {
 		Gson gson = new Gson();
 		return gson.toJson(map);

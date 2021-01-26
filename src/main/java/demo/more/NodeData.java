@@ -2,6 +2,15 @@ package demo.more;
 
 public class NodeData {
 	
+	public NodeData() {
+		
+	}
+	
+	public NodeData(String box_pub_key, String coords) {
+		this.box_pub_key = box_pub_key;
+		this.coords = coords;
+	}
+	
 	private String box_pub_key;
 	
 	private String coords;
