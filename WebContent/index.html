@@ -18,15 +18,41 @@
       #mynetwork {
 	position: absolute;
         top: 0px; right: 0px; bottom: 0px; left: 0px;
-        border: 1px solid lightgray;
       }
+.box {
+  position: relative;
+  display: flex;
+  width: 100%;
+  z-index: 9;
+  font: 10pt sans-serif;
+}
+.box2 {
+  position: relative;
+  float: left;
+  width: 360px;
+  padding: 5px 5px 0px;  
+  border: 1px solid solid lightgray;
+  background-color: rgba(220, 220, 220, 0.8);
+}
+.clear-float {
+  clear: both
+}
     </style>
   </head>
 
   <body>
-    <!--h2>Yggdrasil Map</h2-->
-    <input id="textId" type="text" style="position: relative; width: 300px; height: 20px; z-index: 9;"></input>
-    <button onclick="focusRandom();" style="position: relative; width: 100px; height: 30px; z-index: 9;">Search</button>
+<div class='box'>
+  <div class='box2'>
+    <input id="textId" type="text" style="position: relative; width: 250px; height: 20px;"/>
+    <button onclick="focusNode();" style="position: relative; width: 100px; height: 30px;">Search</button>
+  </div>
+</div>
+
+<div class='box'>
+  <div id="ipNodeInfo" class='box2'>
+  </div>
+</div>
+
 
     <script type="text/javascript">
       var statusUpdateSpan;
@@ -83,9 +109,10 @@
 
       }
 
-      function focusRandom() {
+      function focusNode() {
         updateValues();
         var textId = document.getElementById("textId").value;
+        var ipNodeInfo = document.getElementById("ipNodeInfo");
         var options = {
           scale: scale,
           offset: { x: offsetx, y: offsety },
@@ -100,13 +127,21 @@
             if (allNodes[nodeId].label === textId) {
                network.focus(allNodes[nodeId].id, options);
                fireNodeSelected(allNodes[nodeId]);
-               console.log(allNodes[nodeId].label);
+               ipNodeInfo.innerHTML = allNodes[nodeId].title;
+               var connectedNodes = network.getConnectedNodes(nodeId);
+               for (i = 0; i < connectedNodes.length; i++) {
+                   ipNodeInfo.innerHTML = ipNodeInfo.innerHTML.concat('<br>'.concat(allNodes[connectedNodes[i]].title));
+               }
                break;
             }
             if (allNodes[nodeId].title === 'IP:'.concat(textId)) {
                network.focus(allNodes[nodeId].id, options);
                fireNodeSelected(allNodes[nodeId]);
-               console.log(allNodes[nodeId].title);
+               ipNodeInfo.innerHTML = allNodes[nodeId].title;
+               var connectedNodes = network.getConnectedNodes(nodeId);
+               for (i = 0; i < connectedNodes.length; i++) {
+                   ipNodeInfo.innerHTML = ipNodeInfo.innerHTML.concat('<br>'.concat(allNodes[connectedNodes[i]].title));
+               }
                break;
             }
         }       
