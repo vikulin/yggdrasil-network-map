@@ -92,7 +92,7 @@ public class NodeData2JSGraphConverter {
 			if(!coords.equals("")) {
 				group = coords.split(" ").length;
 			}
-			long value = Double.valueOf(graph.getNode(n.getId().toString()).getAttribute("Cb").toString()).longValue()/100+5;
+			long value = Double.valueOf(graph.getNode(n.getId().toString()).getAttribute("Cb").toString()).longValue()+5;
 			double[] coordinates = GraphPosLengthUtils.nodePosition(graph, n.getId().toString());
 			nodesSb.append(String.format(Locale.ROOT, rowNodes, n.getId(), coords, n.getIp(), value, group, 100*coordinates[0], 100*coordinates[1]));
 
