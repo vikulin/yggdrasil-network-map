@@ -4,19 +4,19 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 import org.graphstream.algorithm.BetweennessCentrality;
 import org.graphstream.graph.Graph;
-import org.graphstream.graph.Node;
 import org.graphstream.graph.implementations.SingleGraph;
 import org.graphstream.ui.graphicGraph.GraphPosLengthUtils;
 import org.graphstream.ui.layout.Layout;
 import org.graphstream.ui.layout.springbox.implementations.SpringBox;
 
+import demo.comparator.NodeDataPairSortByCoords;
 import demo.node.NodeDataPair;
 
 /**
@@ -26,22 +26,47 @@ import demo.node.NodeDataPair;
 public class NodeData2JSGraphConverter {
 	
 	public static void createJs(Set<NodeDataPair> nodes) throws IOException, ClassNotFoundException {
+		
+		Set<NodeDataPair> unknownNodes = new TreeSet<NodeDataPair>(new NodeDataPairSortByCoords());
 
 		Map<String, Long> idByCoordinates = new HashMap<String, Long>();
+		Long unknownIdStartFrom = Long.valueOf(nodes.size()+100);
 		
 		Graph graph = new SingleGraph("Yggdrasil network");
-		  Layout layout = new SpringBox(false);
-		  graph.addSink(layout);
-		  layout.addAttributeSink(graph);
+		Layout layout = new SpringBox(false);
+		graph.addSink(layout);
+		layout.addAttributeSink(graph);
 		BetweennessCentrality bcb = new BetweennessCentrality();
-		
 		
 		for(NodeDataPair n:nodes) {
 			String coords = n.getNodeData().getCoords().substring(1, n.getNodeData().getCoords().length()-1);
 			idByCoordinates.put(coords, n.getId());
-			graph.addNode(n.getId().toString());
 		}
 		for(NodeDataPair n:nodes) {
+			String coords = n.getNodeData().getCoords().substring(1, n.getNodeData().getCoords().length()-1);
+			if(coords.equals("")) {
+				continue;
+			}
+			int index = coords.lastIndexOf(' ');
+			if(index<0) {
+				continue;
+			}
+			String from = coords.substring(0, index);
+			Long idFrom = idByCoordinates.get(from);
+			//skip null. it occurs when parent coords are unknown
+			if(idFrom==null) {
+				//special condition for unknown parent nodes
+				String recoverCoords = "["+from+"]";
+				NodeDataPair nodeDataPair = new NodeDataPair(null, new NodeData(null, recoverCoords));
+				nodeDataPair.setId(unknownIdStartFrom);
+				idByCoordinates.put(from, unknownIdStartFrom);
+				unknownNodes.add(nodeDataPair);
+				unknownIdStartFrom++;
+			}
+		}
+		nodes.addAll(unknownNodes);
+		for(NodeDataPair n:nodes) {
+			graph.addNode(n.getId().toString());
 			String coords = n.getNodeData().getCoords().substring(1, n.getNodeData().getCoords().length()-1);
 			if(coords.equals("")) {
 				continue;
@@ -69,10 +94,10 @@ public class NodeData2JSGraphConverter {
 		bcb.init(graph);
 		bcb.compute();
 		
-		  // iterate the compute() method a number of times
-		  while(layout.getStabilization() < 0.9){
+		// iterate the compute() method a number of times
+		while(layout.getStabilization() < 0.9){
 		    layout.compute();
-		  }
+		}
 		  
 		//StringBuilder sb = new StringBuilder();
 		StringBuilder nodesSb = new StringBuilder();

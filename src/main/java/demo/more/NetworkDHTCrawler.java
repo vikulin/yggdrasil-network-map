@@ -63,7 +63,6 @@ public class NetworkDHTCrawler {
 				if(nodesReponse.getResponse().getNodes()==null) {
 					Gson gson = new Gson();
 					log.info("incorrect response: "+gson.toJson(nodesReponse));
-					NetworkDHTCrawler.nodes.add(new NodeDataPair(null, nodeData));
 					return null;
 				}
 				final Map<String, NodeData> nodes = nodesReponse.getResponse().getNodes();
