@@ -99,7 +99,6 @@ public class NodeData2JSGraphConverter {
 		    layout.compute();
 		}
 		  
-		//StringBuilder sb = new StringBuilder();
 		StringBuilder nodesSb = new StringBuilder();
 		StringBuilder edgesSb = new StringBuilder();
 		String beginNodes = "var nodes = [\n";
@@ -159,10 +158,4 @@ public class NodeData2JSGraphConverter {
 		value = (int) (128/Math.pow(2,group));
 		System.out.println(value);
 	}
-	
-	public static final String STYLE = "node {" + "fill-mode: dyn-plain;"
-			+ "fill-color: blue,yellow;" + "size-mode: dyn-size;"
-			+ "stroke-color: black;" + "stroke-width: 1px;"
-			+ "stroke-mode: plain;" + "}";
-	
 }
