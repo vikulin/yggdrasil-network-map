@@ -117,6 +117,7 @@
 	</dependencies>
 
 	<build>
+		<finalName>yggdrasil-network-map</finalName>
 		<plugins>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
