@@ -81,7 +81,7 @@
 		    if (hours   < 10) {hours   = "0"+hours;}
 		    if (minutes < 10) {minutes = "0"+minutes;}
 		    if (seconds < 10) {seconds = "0"+seconds;}
-		    return hours+'hours '+minutes+'min '+seconds+'sec';
+		    return minutes+'min '+seconds+'sec';
 		}
 	</script>
 	<div id="mynetwork"></div>
@@ -96,7 +96,7 @@
 		var deltaTime = (Math.floor((Date.now()-generated)/1000)).toString();
 		var mapInfo = document.getElementById("mapInfo");
 		mapInfo.innerHTML = mapInfo.innerHTML
-		.concat('<br>Nodes:'.concat(nodesNumber.toString().concat('<br>Edges:'.concat(edgesNumber.toString().concat('<br>Generated:'.concat(deltaTime.toHHMMSS().concat(' ago')))))));
+		+'<br>Nodes:'+nodesNumber.toString()+'<br>Edges:'+edgesNumber.toString()+'<br>Generated:'+deltaTime.toHHMMSS()+' ago';
 
 		function redrawAll() {
 			var container = document.getElementById("mynetwork");
@@ -143,10 +143,10 @@
 					var connectedNodes = network.getConnectedNodes(nodeId);
 					for (i = 0; i < connectedNodes.length; i++) {
 						ipNodeInfo.innerHTML = ipNodeInfo.innerHTML
-								.concat('<br>'
-										.concat(allNodes[connectedNodes[i]].title
-												.concat('|'
-														.concat(allNodes[connectedNodes[i]].label))));
+								+'<br>'
+										+allNodes[connectedNodes[i]].title
+												+'|'
+														+allNodes[connectedNodes[i]].label;
 					}
 					break;
 				}
@@ -157,10 +157,10 @@
 					var connectedNodes = network.getConnectedNodes(nodeId);
 					for (i = 0; i < connectedNodes.length; i++) {
 						ipNodeInfo.innerHTML = ipNodeInfo.innerHTML
-								.concat('<br>'
-										.concat(allNodes[connectedNodes[i]].title
-												.concat('|'
-														.concat(allNodes[connectedNodes[i]].label))));
+								+'<br>'
+										+allNodes[connectedNodes[i]].title
+												+'|'
+														+allNodes[connectedNodes[i]].label;
 					}
 					break;
 				}
