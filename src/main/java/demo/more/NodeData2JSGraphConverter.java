@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -122,7 +123,10 @@ public class NodeData2JSGraphConverter {
 		String rowEdges = "{from: %d, to: %d, value: %d},\n";
 		String endNodes = "];\n";
 		String beginEdges = "var edges = [\n";
-		String endEdges = "];";
+		String endEdges = "];\n";
+		String generated = "var generated = %d;\n";
+		String nodesNumber = "var nodesNumber = %d;\n";
+		String edgesNumber = "var edgesNumber = %d;";
 		nodesSb.append(beginNodes);
 		edgesSb.append(beginEdges);
 		
@@ -159,6 +163,9 @@ public class NodeData2JSGraphConverter {
 		try (Writer writer = new FileWriter("graph-data.js")) {
 			writer.append(nodesSb.toString());
 			writer.append(edgesSb.toString());
+			writer.append(String.format(generated, new Date().getTime()));
+			writer.append(String.format(nodesNumber, graph.getNodeCount()));
+			writer.append(String.format(edgesNumber, graph.getEdgeCount()));
 		}
 		
 	}

@@ -55,7 +55,9 @@
 	<div class='box'>
 		<div id="ipNodeInfo" class='box2'></div>
 	</div>
-
+	<div class='box'>
+		<div id="mapInfo" class='box2'></div>
+	</div>
 
 	<script type="text/javascript">
 		var statusUpdateSpan;
@@ -70,6 +72,17 @@
 			positiony = 500;
 			easingFunction = 'easeInOutQuad';
 		}
+		String.prototype.toHHMMSS = function () {
+		    var sec_num = parseInt(this, 10); // don't forget the second param
+		    var hours   = Math.floor(sec_num / 3600);
+		    var minutes = Math.floor((sec_num - (hours * 3600)) / 60);
+		    var seconds = sec_num - (hours * 3600) - (minutes * 60);
+
+		    if (hours   < 10) {hours   = "0"+hours;}
+		    if (minutes < 10) {minutes = "0"+minutes;}
+		    if (seconds < 10) {seconds = "0"+seconds;}
+		    return hours+'hours '+minutes+'min '+seconds+'sec';
+		}
 	</script>
 	<div id="mynetwork"></div>
 
@@ -80,6 +93,10 @@
 
 		var nodesDataset = new vis.DataSet(nodes); // these come from WorldCup2014.js
 		var edgesDataset = new vis.DataSet(edges); // these come from WorldCup2014.js
+		var deltaTime = (Math.floor((Date.now()-generated)/1000)).toString();
+		var mapInfo = document.getElementById("mapInfo");
+		mapInfo.innerHTML = mapInfo.innerHTML
+		.concat('<br>Nodes:'.concat(nodesNumber.toString().concat('<br>Edges:'.concat(edgesNumber.toString().concat('<br>Generated:'.concat(deltaTime.toHHMMSS().concat(' ago')))))));
 
 		function redrawAll() {
 			var container = document.getElementById("mynetwork");
@@ -242,6 +259,5 @@
 
 		redrawAll();
 	</script>
-
 </body>
 </html>
