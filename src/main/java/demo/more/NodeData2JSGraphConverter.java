@@ -1,5 +1,6 @@
 package demo.more;
 
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
@@ -31,7 +32,7 @@ import demo.node.NodeDataPair;
  */
 public class NodeData2JSGraphConverter {
 	
-	public static void createJs(Set<NodeDataPair> nodes) throws IOException, ClassNotFoundException {
+	public static void createJs(Set<NodeDataPair> nodes, String dataPath) throws IOException, ClassNotFoundException {
 		
 		Set<NodeDataPair> unknownNodes = new TreeSet<NodeDataPair>(new NodeDataPairSortByCoords());
 
@@ -160,7 +161,7 @@ public class NodeData2JSGraphConverter {
 		nodesSb.append(endNodes);
 		edgesSb.append(endEdges);
 		
-		try (Writer writer = new FileWriter("graph-data.js")) {
+		try (Writer writer = new FileWriter(new File(dataPath,"graph-data.js"))) {
 			writer.append(nodesSb.toString());
 			writer.append(edgesSb.toString());
 			writer.append(String.format(generated, new Date().getTime()));

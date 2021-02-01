@@ -1,6 +1,7 @@
 package demo.more;
 
 import java.io.DataOutputStream;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -130,8 +131,7 @@ public class NetworkDHTCrawler {
 		return apiReponse;
 	}
 	
-	public static void main(String args[]) throws InterruptedException, ExecutionException, IOException, ClassNotFoundException {
-		
+	public static void run(String dataPath) throws InterruptedException, ExecutionException, IOException, ClassNotFoundException {
 		queue = new ConcurrentLinkedQueue<Future<NodeDataPair>>();
 		String json = new ApiRequest().getDHT().serialize();
 		NetworkDHTCrawler crawler = new NetworkDHTCrawler();
@@ -158,13 +158,17 @@ public class NetworkDHTCrawler {
 			ndp.setId(id);
 			id++;
 		}
-		try (Writer writer = new FileWriter("nodes.json")) {
+		try (Writer writer = new FileWriter(new File(dataPath, "nodes.json"))) {
 		    Gson gson = new GsonBuilder().setPrettyPrinting().create();
 		    gson.toJson(nodes, writer);
 		}
 		System.out.println("done");
 		threadPool.shutdownNow();
-		NodeData2JSGraphConverter.createJs(NetworkDHTCrawler.nodes);
+		NodeData2JSGraphConverter.createJs(NetworkDHTCrawler.nodes, dataPath);
 		System.out.println("JS file created");
+	}
+	
+	public static void main(String args[]) throws InterruptedException, ExecutionException, IOException, ClassNotFoundException {
+		run("");
 	}
 }
