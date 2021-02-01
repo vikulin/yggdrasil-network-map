@@ -3,13 +3,18 @@ package demo.more;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import org.graphstream.algorithm.BetweennessCentrality;
+import org.graphstream.graph.ElementNotFoundException;
 import org.graphstream.graph.Graph;
 import org.graphstream.graph.implementations.SingleGraph;
 import org.graphstream.ui.graphicGraph.GraphPosLengthUtils;
@@ -52,16 +57,22 @@ public class NodeData2JSGraphConverter {
 				continue;
 			}
 			String from = coords.substring(0, index);
-			Long idFrom = idByCoordinates.get(from);
-			//skip null. it occurs when parent coords are unknown
-			if(idFrom==null) {
-				//special condition for unknown parent nodes
-				String recoverCoords = "["+from+"]";
-				NodeDataPair nodeDataPair = new NodeDataPair(null, new NodeData(null, recoverCoords));
-				nodeDataPair.setId(unknownIdStartFrom);
-				idByCoordinates.put(from, unknownIdStartFrom);
-				unknownNodes.add(nodeDataPair);
-				unknownIdStartFrom++;
+			
+			String[] array = from.split(" ");
+			List<String> list = Arrays.asList(array);
+			for(int i=0;i<list.size();i++) {
+				String parentCoords = list.subList(0, list.size()-i).stream().collect(Collectors.joining(" "));
+				Long idFrom = idByCoordinates.get(parentCoords);
+				//skip null. it occurs when parent coords are unknown
+				if(idFrom==null) {
+					//special condition for unknown parent nodes
+					String recoverCoords = "["+parentCoords+"]";
+					NodeDataPair nodeDataPair = new NodeDataPair(null, new NodeData(null, recoverCoords));
+					nodeDataPair.setId(unknownIdStartFrom);
+					idByCoordinates.put(parentCoords, unknownIdStartFrom);
+					unknownNodes.add(nodeDataPair);
+					unknownIdStartFrom++;
+				}
 			}
 		}
 		nodes.addAll(unknownNodes);
@@ -87,7 +98,12 @@ public class NodeData2JSGraphConverter {
 				String toId =  idByCoordinates.get(coords).toString();
 				String edgeId = fromId+"-"+toId;
 				if(graph.getEdge(edgeId)==null) {
-					graph.addEdge(edgeId, fromId, toId);
+					try {
+						graph.addEdge(edgeId, fromId, toId);
+					} catch (ElementNotFoundException e) {
+						e.printStackTrace();
+						System.out.println("fromId="+fromId+" toId="+toId);
+					}
 				}
 			}
 		}
@@ -148,14 +164,22 @@ public class NodeData2JSGraphConverter {
 	}
 	
 	public static void main(String[] args) {
-		String coords = "1 2";
+		String coords = "1 2 3";
+		
 		int index = coords.lastIndexOf(' ');
-		System.out.println(coords.substring(0, index));
-		System.out.println(coords.substring(0, index).length());
-		System.out.println(coords.substring(index+1));
-		int value;
-		int group = 3; 
-		value = (int) (128/Math.pow(2,group));
-		System.out.println(value);
+		if(index>0) {
+			String[] array = coords.split(" ");
+			List<String> list = Arrays.asList(array);
+			for(int i=0;i<list.size();i++) {
+				System.out.println("["+list.subList(0, list.size()-i).stream().collect(Collectors.joining(" "))+"]");
+				//System.out.println(coords.substring(0, index));
+				//System.out.println(coords.substring(0, index).length());
+				//System.out.println(coords.substring(index+1));
+			}
+		}
+		//int value;
+		//int group = 3; 
+		//value = (int) (128/Math.pow(2,group));
+		//System.out.println(value);
 	}
 }
