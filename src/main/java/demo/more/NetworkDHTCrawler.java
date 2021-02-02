@@ -38,11 +38,11 @@ public class NetworkDHTCrawler {
 	
 	private static final int ADMIN_API_PORT=9001;
 	
-	private static ExecutorService threadPool = Executors.newFixedThreadPool(10);
+	private ExecutorService threadPool = Executors.newFixedThreadPool(10);
 	
-	private static Queue<Future<NodeDataPair>> queue = null;
+	private Queue<Future<NodeDataPair>> queue = null;
 	
-	public static Set<NodeDataPair> nodes = new TreeSet<NodeDataPair>(new NodeDataPairSortByCoords());
+	public Set<NodeDataPair> nodes = new TreeSet<NodeDataPair>(new NodeDataPairSortByCoords());
 	
 	private void run(NodeData nodeData, Class<?> class_) {
 
@@ -69,10 +69,10 @@ public class NetworkDHTCrawler {
 				final Map<String, NodeData> nodes = nodesReponse.getResponse().getNodes();
 				for(final Entry<String, NodeData> nodeEntry:nodes.entrySet()) {
 					//duplicated values are checked by Set
-					if(NetworkDHTCrawler.nodes.contains(new NodeDataPair(nodeEntry.getKey(), nodeEntry.getValue()))) {
+					if(NetworkDHTCrawler.this.nodes.contains(new NodeDataPair(nodeEntry.getKey(), nodeEntry.getValue()))) {
 						continue;
 					}
-					NetworkDHTCrawler.nodes.add(new NodeDataPair(nodeEntry.getKey(), nodeEntry.getValue()));
+					NetworkDHTCrawler.this.nodes.add(new NodeDataPair(nodeEntry.getKey(), nodeEntry.getValue()));
 					//nodes.put(nodeEntry.getKey(), nodeEntry.getValue());
 					NetworkDHTCrawler.this.run(nodeEntry.getValue(), ApiNodesResponse.class);
 				}
@@ -95,7 +95,7 @@ public class NetworkDHTCrawler {
 			os = new DataOutputStream(clientSocket.getOutputStream());
 			os.writeBytes(json);
 			System.out.println(json);
-			System.out.println("Total nodes:"+NetworkDHTCrawler.nodes.size());
+			System.out.println("Total nodes:"+NetworkDHTCrawler.this.nodes.size());
 			int i = 0;
 			is = clientSocket.getInputStream();
 			while((i = is.read(cbuf))>0) {
@@ -131,13 +131,13 @@ public class NetworkDHTCrawler {
 		return apiReponse;
 	}
 	
-	public static void run(String dataPath) throws InterruptedException, ExecutionException, IOException, ClassNotFoundException {
+	public void run(String dataPath) throws InterruptedException, ExecutionException, IOException, ClassNotFoundException {
 		queue = new ConcurrentLinkedQueue<Future<NodeDataPair>>();
 		String json = new ApiRequest().getDHT().serialize();
 		NetworkDHTCrawler crawler = new NetworkDHTCrawler();
 		ApiDHTResponse dhtReponse = (ApiDHTResponse)crawler.apiRequest(json, ApiDHTResponse.class);
 		if(dhtReponse==null) {
-			System.exit(1);
+			return;
 		}
 		//String json = new ApiRequest().dhtPing("5db525ea8fa6d3f20b5bb3d6d810f047ca447987e177532f78ed01713f459414", "[1 13]").serialize();
 		Map<String, NodeData> localDHT = dhtReponse.getResponse().getDht();
@@ -154,7 +154,7 @@ public class NetworkDHTCrawler {
 			}
 		}
 		long id = 1;
-		for(NodeDataPair ndp:NetworkDHTCrawler.nodes) {
+		for(NodeDataPair ndp:NetworkDHTCrawler.this.nodes) {
 			ndp.setId(id);
 			id++;
 		}
@@ -164,11 +164,11 @@ public class NetworkDHTCrawler {
 		}
 		System.out.println("done");
 		threadPool.shutdownNow();
-		NodeData2JSGraphConverter.createJs(NetworkDHTCrawler.nodes, dataPath);
+		NodeData2JSGraphConverter.createJs(NetworkDHTCrawler.this.nodes, dataPath);
 		System.out.println("JS file created");
 	}
 	
 	public static void main(String args[]) throws InterruptedException, ExecutionException, IOException, ClassNotFoundException {
-		run("");
+		new NetworkDHTCrawler().run("");
 	}
 }

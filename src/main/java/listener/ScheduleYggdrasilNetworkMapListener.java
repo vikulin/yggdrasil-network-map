@@ -10,22 +10,24 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
+import demo.more.NetworkDHTCrawler;
+
 public class ScheduleYggdrasilNetworkMapListener implements ServletContextListener {
 	
 	
 	 	@Override
 		public void contextInitialized(ServletContextEvent arg0) {
-	 		ScheduledExecutorService ses = Executors.newScheduledThreadPool(1);
+	 		ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor();
 	 		final String dataPath = arg0.getServletContext().getRealPath("/data");
 		 	Runnable task2 = () -> {
 				try {
-					demo.more.NetworkDHTCrawler.run(dataPath);
+					new NetworkDHTCrawler().run(dataPath);
 				} catch (ClassNotFoundException | InterruptedException | ExecutionException | IOException e) {
 					e.printStackTrace();
 				}
 			};
-			ses.scheduleAtFixedRate(task2, 0, 1, TimeUnit.HOURS);
-			arg0.getServletContext().setAttribute ("timer", ses);
+			ses.scheduleAtFixedRate(task2, 1, 60, TimeUnit.MINUTES);
+			arg0.getServletContext().setAttribute("timer", ses);
 		}
 
 	    @Override
