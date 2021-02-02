@@ -139,7 +139,7 @@ public class NetworkDHTCrawler {
 		NetworkDHTCrawler crawler = new NetworkDHTCrawler();
 		ApiDHTResponse dhtReponse = (ApiDHTResponse)crawler.apiRequest(json, ApiDHTResponse.class);
 		if(dhtReponse==null) {
-			System.exit(1);
+			return;
 		}
 		//String json = new ApiRequest().dhtPing("5db525ea8fa6d3f20b5bb3d6d810f047ca447987e177532f78ed01713f459414", "[1 13]").serialize();
 		Map<String, NodeData> localDHT = dhtReponse.getResponse().getDht();

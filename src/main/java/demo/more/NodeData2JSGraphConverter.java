@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
@@ -80,6 +79,8 @@ public class NodeData2JSGraphConverter {
 		nodes.addAll(unknownNodes);
 		for(NodeDataPair n:nodes) {
 			graph.addNode(n.getId().toString());
+		}
+		for(NodeDataPair n:nodes) {
 			String coords = n.getNodeData().getCoords().substring(1, n.getNodeData().getCoords().length()-1);
 			if(coords.equals("")) {
 				continue;
@@ -113,7 +114,7 @@ public class NodeData2JSGraphConverter {
 		bcb.compute();
 		
 		// iterate the compute() method a number of times
-		while(layout.getStabilization() < 0.9){
+		while(layout.getStabilization() < 0.92){
 		    layout.compute();
 		}
 		  
@@ -127,7 +128,7 @@ public class NodeData2JSGraphConverter {
 		String endEdges = "];\n";
 		String generated = "var generated = %d;\n";
 		String nodesNumber = "var nodesNumber = %d;\n";
-		String edgesNumber = "var edgesNumber = %d;";
+		String linksNumber = "var linksNumber = %d;";
 		nodesSb.append(beginNodes);
 		edgesSb.append(beginEdges);
 		
@@ -166,7 +167,7 @@ public class NodeData2JSGraphConverter {
 			writer.append(edgesSb.toString());
 			writer.append(String.format(generated, new Date().getTime()));
 			writer.append(String.format(nodesNumber, graph.getNodeCount()));
-			writer.append(String.format(edgesNumber, graph.getEdgeCount()));
+			writer.append(String.format(linksNumber, graph.getEdgeCount()));
 		}
 		
 	}

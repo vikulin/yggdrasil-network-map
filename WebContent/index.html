@@ -1,9 +1,8 @@
 <!DOCTYPE html>
-<!-- saved from url=(0044)http://kenedict.com/networks/worldcup14/vis/ , thanks Andre!-->
 <html lang="en">
 <head>
 <meta http-equiv="content-type" content="text/html; charset=UTF8" />
-<title>Yggdrasil Network</title>
+<title>Yggdrasil network map</title>
 
 <script type="text/javascript"
 	src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
@@ -72,16 +71,23 @@
 			positiony = 500;
 			easingFunction = 'easeInOutQuad';
 		}
-		String.prototype.toHHMMSS = function () {
-		    var sec_num = parseInt(this, 10); // don't forget the second param
-		    var hours   = Math.floor(sec_num / 3600);
-		    var minutes = Math.floor((sec_num - (hours * 3600)) / 60);
-		    var seconds = sec_num - (hours * 3600) - (minutes * 60);
+		String.prototype.toHHMMSS = function() {
+			var sec_num = parseInt(this, 10); // don't forget the second param
+			var hours = Math.floor(sec_num / 3600);
+			var minutes = Math.floor((sec_num - (hours * 3600)) / 60);
+			var seconds = sec_num - (hours * 3600) - (minutes * 60);
 
-		    if (hours   < 10) {hours   = "0"+hours;}
-		    if (minutes < 10) {minutes = "0"+minutes;}
-		    if (seconds < 10) {seconds = "0"+seconds;}
-		    return minutes+'min '+seconds+'sec';
+			if (minutes < 10) {
+				minutes = "0" + minutes;
+			}
+			if (seconds < 10) {
+				seconds = "0" + seconds;
+			}
+			if (hours > 0) {
+				return hours + 'hours ' + minutes + 'min ' + seconds + 'sec';
+			} else {
+				return minutes + 'min ' + seconds + 'sec';
+			}
 		}
 	</script>
 	<div id="mynetwork"></div>
@@ -93,10 +99,13 @@
 
 		var nodesDataset = new vis.DataSet(nodes);
 		var edgesDataset = new vis.DataSet(edges);
-		var deltaTime = (Math.floor((Date.now()-generated)/1000)).toString();
+		var deltaTime = (Math.floor((Date.now() - generated) / 1000))
+				.toString();
 		var mapInfo = document.getElementById("mapInfo");
-		mapInfo.innerHTML = mapInfo.innerHTML
-		+'<br>Nodes:'+nodesNumber.toString()+'<br>Edges:'+edgesNumber.toString()+'<br>Generated:'+deltaTime.toHHMMSS()+' ago';
+		mapInfo.innerHTML = mapInfo.innerHTML + '<br>Nodes:'
+				+ nodesNumber.toString() + '<br>Links:'
+				+ linksNumber.toString() + '<br>Generated:'
+				+ deltaTime.toHHMMSS() + ' ago';
 
 		function redrawAll() {
 			var container = document.getElementById("mynetwork");
@@ -139,28 +148,26 @@
 				if (allNodes[nodeId].label === textId) {
 					network.focus(allNodes[nodeId].id, options);
 					fireNodeSelected(allNodes[nodeId]);
-					ipNodeInfo.innerHTML = allNodes[nodeId].title;
+					ipNodeInfo.innerHTML = allNodes[nodeId].title + ' ['
+						+ allNodes[nodeId].label+']';
 					var connectedNodes = network.getConnectedNodes(nodeId);
 					for (i = 0; i < connectedNodes.length; i++) {
-						ipNodeInfo.innerHTML = ipNodeInfo.innerHTML
-								+'<br>'
-										+allNodes[connectedNodes[i]].title
-												+'|'
-														+allNodes[connectedNodes[i]].label;
+						ipNodeInfo.innerHTML = ipNodeInfo.innerHTML + '<br>'
+								+ allNodes[connectedNodes[i]].title + ' ['
+								+ allNodes[connectedNodes[i]].label + ']';
 					}
 					break;
 				}
 				if (allNodes[nodeId].title === textId) {
 					network.focus(allNodes[nodeId].id, options);
 					fireNodeSelected(allNodes[nodeId]);
-					ipNodeInfo.innerHTML = allNodes[nodeId].title;
+					ipNodeInfo.innerHTML = allNodes[nodeId].title + ' ['
+					+ allNodes[nodeId].label+']';
 					var connectedNodes = network.getConnectedNodes(nodeId);
 					for (i = 0; i < connectedNodes.length; i++) {
-						ipNodeInfo.innerHTML = ipNodeInfo.innerHTML
-								+'<br>'
-										+allNodes[connectedNodes[i]].title
-												+'|'
-														+allNodes[connectedNodes[i]].label;
+						ipNodeInfo.innerHTML = ipNodeInfo.innerHTML + '<br>'
+								+ allNodes[connectedNodes[i]].title + ' ['
+								+ allNodes[connectedNodes[i]].label + ']';
 					}
 					break;
 				}
