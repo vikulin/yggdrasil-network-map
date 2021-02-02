@@ -38,11 +38,9 @@ public class NetworkDHTCrawler {
 	
 	private static final int ADMIN_API_PORT=9001;
 	
-	private static ExecutorService threadPool = Executors.newFixedThreadPool(10);
-	
-	private static Queue<Future<NodeDataPair>> queue = null;
-	
-	public static Set<NodeDataPair> nodes = new TreeSet<NodeDataPair>(new NodeDataPairSortByCoords());
+	private static ExecutorService threadPool;
+	private static Queue<Future<NodeDataPair>> queue;	
+	public static Set<NodeDataPair> nodes;
 	
 	private void run(NodeData nodeData, Class<?> class_) {
 
@@ -132,7 +130,11 @@ public class NetworkDHTCrawler {
 	}
 	
 	public static void run(String dataPath) throws InterruptedException, ExecutionException, IOException, ClassNotFoundException {
+		
+		threadPool = Executors.newFixedThreadPool(10);
 		queue = new ConcurrentLinkedQueue<Future<NodeDataPair>>();
+		nodes = new TreeSet<NodeDataPair>(new NodeDataPairSortByCoords());
+		
 		String json = new ApiRequest().getDHT().serialize();
 		NetworkDHTCrawler crawler = new NetworkDHTCrawler();
 		ApiDHTResponse dhtReponse = (ApiDHTResponse)crawler.apiRequest(json, ApiDHTResponse.class);
