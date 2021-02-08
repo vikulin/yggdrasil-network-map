@@ -2,7 +2,7 @@ package demo.node;
 
 import demo.more.NodeData;
 
-public class NodeDataPair /*implements Comparable<NodeDataPair> */{
+public class NodeDataPair {
 	
 	private Long id;
 	
@@ -52,15 +52,5 @@ public class NodeDataPair /*implements Comparable<NodeDataPair> */{
 		}
 		return pubKey.hashCode();
 	}
-
-	/*
-	@Override
-	public int compareTo(NodeDataPair o) {
-		if(this.nodeData.getCoords()!=null && o.getNodeData().getCoords()!=null && this.nodeData.getCoords().equals(o.getNodeData().getCoords())) {
-			return 0;
-		}
-		return new NodeDataPairSortByCoords().compare(this, o);
-	}
-	*/
 
 }

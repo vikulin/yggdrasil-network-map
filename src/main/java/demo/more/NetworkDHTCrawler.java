@@ -13,7 +13,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
@@ -28,7 +27,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 
-import demo.comparator.NodeDataPairSortByCoords;
 import demo.node.NodeDataPair;
 
 public class NetworkDHTCrawler {
@@ -102,7 +100,6 @@ public class NetworkDHTCrawler {
 			response = sb.toString();
 			System.out.println(response);
 		} catch (java.net.SocketException e) {
-			//System.err.println(e.getMessage());
 			e.printStackTrace();
 		} catch (Exception e) {
 			e.printStackTrace();

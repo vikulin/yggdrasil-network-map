@@ -83,7 +83,6 @@ public class NodeData2JSGraphConverter {
 			}
 		}
 		nodes.addAll(unknownNodes);
-		//sort out here
 		for(NodeDataPair n:nodes) {
 			graph.addNode(n.getId().toString());
 		}
