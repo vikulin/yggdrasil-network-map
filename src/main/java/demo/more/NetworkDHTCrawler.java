@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.io.Writer;
 import java.net.Socket;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
@@ -71,7 +72,6 @@ public class NetworkDHTCrawler {
 						continue;
 					}
 					NetworkDHTCrawler.nodes.add(new NodeDataPair(nodeEntry.getKey(), nodeEntry.getValue()));
-					//nodes.put(nodeEntry.getKey(), nodeEntry.getValue());
 					NetworkDHTCrawler.this.run(nodeEntry.getValue(), ApiNodesResponse.class);
 				}
 				return null;
@@ -133,7 +133,7 @@ public class NetworkDHTCrawler {
 		
 		threadPool = Executors.newFixedThreadPool(10);
 		queue = new ConcurrentLinkedQueue<Future<NodeDataPair>>();
-		nodes = new TreeSet<NodeDataPair>(new NodeDataPairSortByCoords());
+		nodes = new HashSet<NodeDataPair>();
 		
 		String json = new ApiRequest().getDHT().serialize();
 		NetworkDHTCrawler crawler = new NetworkDHTCrawler();

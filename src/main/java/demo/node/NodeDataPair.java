@@ -1,9 +1,8 @@
 package demo.node;
 
-import demo.comparator.NodeDataPairSortByCoords;
 import demo.more.NodeData;
 
-public class NodeDataPair implements Comparable<NodeDataPair> {
+public class NodeDataPair /*implements Comparable<NodeDataPair> */{
 	
 	private Long id;
 	
@@ -42,14 +41,19 @@ public class NodeDataPair implements Comparable<NodeDataPair> {
 
 	@Override
 	public boolean equals(Object obj) {
-		return this.nodeData.getCoords()!=null && obj instanceof NodeDataPair && this.nodeData.getCoords().equals(((NodeDataPair)obj).getNodeData().getCoords());
+		return this.nodeData.getBox_pub_key()!=null && obj instanceof NodeDataPair && this.nodeData.getBox_pub_key().equals(((NodeDataPair)obj).getNodeData().getBox_pub_key());
 	}
 	
 	@Override
 	public int hashCode() {
-		return this.nodeData.getCoords().hashCode();
+		String pubKey = this.nodeData.getBox_pub_key();
+		if(pubKey==null) {
+			return -1;
+		}
+		return pubKey.hashCode();
 	}
 
+	/*
 	@Override
 	public int compareTo(NodeDataPair o) {
 		if(this.nodeData.getCoords()!=null && o.getNodeData().getCoords()!=null && this.nodeData.getCoords().equals(o.getNodeData().getCoords())) {
@@ -57,6 +61,6 @@ public class NodeDataPair implements Comparable<NodeDataPair> {
 		}
 		return new NodeDataPairSortByCoords().compare(this, o);
 	}
-	
+	*/
 
 }

@@ -7,6 +7,7 @@ import java.io.Writer;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -33,7 +34,7 @@ public class NodeData2JSGraphConverter {
 	
 	public static void createJs(Set<NodeDataPair> nodes, String dataPath) throws IOException, ClassNotFoundException {
 		
-		Set<NodeDataPair> unknownNodes = new TreeSet<NodeDataPair>(new NodeDataPairSortByCoords());
+		Set<NodeDataPair> unknownNodes = new HashSet<NodeDataPair>();
 
 		Map<String, Long> idByCoordinates = new HashMap<String, Long>();
 		Long unknownIdStartFrom = Long.valueOf(nodes.size()+100);
@@ -61,22 +62,28 @@ public class NodeData2JSGraphConverter {
 			
 			String[] array = from.split(" ");
 			List<String> list = Arrays.asList(array);
-			for(int i=0;i<list.size();i++) {
-				String parentCoords = list.subList(0, list.size()-i).stream().collect(Collectors.joining(" "));
-				Long idFrom = idByCoordinates.get(parentCoords);
-				//skip null. it occurs when parent coords are unknown
-				if(idFrom==null) {
-					//special condition for unknown parent nodes
-					String recoverCoords = "["+parentCoords+"]";
-					NodeDataPair nodeDataPair = new NodeDataPair(null, new NodeData(null, recoverCoords));
-					nodeDataPair.setId(unknownIdStartFrom);
-					idByCoordinates.put(parentCoords, unknownIdStartFrom);
-					unknownNodes.add(nodeDataPair);
-					unknownIdStartFrom++;
+			try {
+				for(int i=0;i<list.size();i++) {
+					String parentCoords = list.subList(0, list.size()-i).stream().collect(Collectors.joining(" "));
+					Long idFrom = idByCoordinates.get(parentCoords);
+					//skip null. it occurs when parent coords are unknown
+					if(idFrom==null) {
+						//special condition for unknown parent nodes
+						String recoverCoords = "["+parentCoords+"]";
+						NodeDataPair nodeDataPair = new NodeDataPair(null, new NodeData(null, recoverCoords));
+						nodeDataPair.setId(unknownIdStartFrom);
+						idByCoordinates.put(parentCoords, unknownIdStartFrom);
+						unknownNodes.add(nodeDataPair);
+						unknownIdStartFrom++;
+					}
 				}
+			} catch (Exception e) {
+				System.out.println("from:"+from);
+				e.printStackTrace();
 			}
 		}
 		nodes.addAll(unknownNodes);
+		//sort out here
 		for(NodeDataPair n:nodes) {
 			graph.addNode(n.getId().toString());
 		}
