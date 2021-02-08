@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import org.graphstream.algorithm.BetweennessCentrality;
@@ -23,7 +22,6 @@ import org.graphstream.ui.graphicGraph.GraphPosLengthUtils;
 import org.graphstream.ui.layout.Layout;
 import org.graphstream.ui.layout.springbox.implementations.SpringBox;
 
-import demo.comparator.NodeDataPairSortByCoords;
 import demo.node.NodeDataPair;
 
 /**
@@ -192,9 +190,5 @@ public class NodeData2JSGraphConverter {
 				//System.out.println(coords.substring(index+1));
 			}
 		}
-		//int value;
-		//int group = 3; 
-		//value = (int) (128/Math.pow(2,group));
-		//System.out.println(value);
 	}
 }
