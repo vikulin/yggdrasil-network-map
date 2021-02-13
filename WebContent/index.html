@@ -236,6 +236,11 @@
 					allNodes[selectedNode].label = allNodes[selectedNode].hiddenLabel;
 					allNodes[selectedNode].hiddenLabel = undefined;
 				}
+				var ipNodeInfo = document.getElementById("ipNodeInfo");
+				ipNodeInfo.innerHTML = '';
+				ipNodeInfo.innerHTML = ipNodeInfo.innerHTML + '<br>'
+				+ allNodes[selectedNode].title + ' ['
+				+ allNodes[selectedNode].label + ']';
 			} else if (highlightActive === true) {
 				// reset all nodes
 				for ( var nodeId in allNodes) {
