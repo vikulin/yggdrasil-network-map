@@ -163,7 +163,11 @@ public class NetworkDHTCrawler {
 		}
 		System.out.println("done");
 		threadPool.shutdownNow();
-		NodeData2JSGraphConverter.createJs(NetworkDHTCrawler.nodes, dataPath);
+		try {
+			NodeData2JSGraphConverter.createJs(NetworkDHTCrawler.nodes, dataPath);
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
 		System.out.println("JS file created");
 	}
 	
