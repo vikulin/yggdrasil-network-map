@@ -132,7 +132,7 @@ public class NodeData2JSGraphConverter {
 		String endEdges = "];\n";
 		String generated = "var generated = %d;\n";
 		String nodesNumber = "var nodesNumber = %d;\n";
-		String linksNumber = "var linksNumber = %d;";
+		String linksNumber = "var edgesNumber = %d;";
 		nodesSb.append(beginNodes);
 		edgesSb.append(beginEdges);
 		
