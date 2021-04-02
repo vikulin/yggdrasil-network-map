@@ -41,7 +41,7 @@
 </style>
 </head>
 
-<body>
+<body style="background-color: #272b30;">
 	<div class='box'>
 		<div class='box2'>
 			<input id="textId" type="text"
@@ -112,6 +112,7 @@
 			var options = {
 				nodes : {
 					shape : "dot",
+					font:{color:'#b3b3b3'}
 				},
 				physics : false,
 			};
@@ -175,7 +176,7 @@
 		}
 
 		function fireNodeSelected(node) {
-			node.color = "rgba(0,0,0,0.8)";
+			node.color = "rgba(255,255,255,0.8)";
 			var updateArray = [];
 			for (nodeId in allNodes) {
 				if (allNodes.hasOwnProperty(nodeId)) {
