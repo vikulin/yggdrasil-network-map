@@ -193,6 +193,6 @@ public class NetworkDHTCrawler {
 	}
 	
 	public static void main(String args[]) throws InterruptedException, ExecutionException, IOException, ClassNotFoundException {
-		run("");
+		run(".");
 	}
 }
