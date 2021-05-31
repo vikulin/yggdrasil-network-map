@@ -1,18 +1,16 @@
 package demo.node;
 
-import demo.more.NodeData;
-
 public class NodeDataPair {
 	
 	private Long id;
 	
 	private String ip;
 	
-	private NodeData nodeData;
+	private String key;
 	
-	public NodeDataPair(String ip, NodeData nodeData) {
+	public NodeDataPair(String ip, String key) {
 		this.ip = ip;
-		this.nodeData = nodeData;
+		this.key = key;
 	}
 	
 	public String getIp() {
@@ -23,12 +21,12 @@ public class NodeDataPair {
 		this.ip = ip;
 	}
 
-	public NodeData getNodeData() {
-		return nodeData;
+	public String getKey() {
+		return key;
 	}
 
-	public void setNodeData(NodeData nodeData) {
-		this.nodeData = nodeData;
+	public void setKey(String key) {
+		this.key = key;
 	}
 	
 	public Long getId() {
@@ -41,16 +39,16 @@ public class NodeDataPair {
 
 	@Override
 	public boolean equals(Object obj) {
-		return this.nodeData.getBox_pub_key()!=null && obj instanceof NodeDataPair && this.nodeData.getBox_pub_key().equals(((NodeDataPair)obj).getNodeData().getBox_pub_key());
+		return this.key!=null && obj instanceof NodeDataPair && this.key.equals(((NodeDataPair)obj).getKey());
 	}
 	
 	@Override
 	public int hashCode() {
-		String pubKey = this.nodeData.getBox_pub_key();
-		if(pubKey==null) {
+		String key = this.key;
+		if(key==null) {
 			return -1;
 		}
-		return pubKey.hashCode();
+		return key.hashCode();
 	}
 
 }

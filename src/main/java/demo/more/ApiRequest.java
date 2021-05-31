@@ -9,22 +9,9 @@ public class ApiRequest {
 	
 	private Map<String, String> map = new TreeMap<String, String>();
 	
-	public ApiRequest getDHT(){
-		map.put("request", "getDHT");
-		return this;
-	}
-	
-	public ApiRequest dhtPing(String box_pub_key, String coords){
-		map.put("request", "dhtPing");
-		map.put("box_pub_key", box_pub_key);
-		map.put("coords", coords);
-		return this;
-	}
-	
-	public ApiRequest dhtPing(NodeData nodeData){
-		map.put("request", "dhtPing");
-		map.put("box_pub_key", nodeData.getBox_pub_key());
-		map.put("coords", nodeData.getCoords());
+	public ApiRequest getPeers(String key){
+		map.put("request", "debug_remotegetpeers");
+		map.put("key", key);
 		return this;
 	}
 	

@@ -24,7 +24,7 @@ public class ScheduleYggdrasilNetworkMapListener implements ServletContextListen
 					e.printStackTrace();
 				}
 			};
-			ses.scheduleAtFixedRate(task2, 1, 60, TimeUnit.MINUTES);
+			ses.scheduleAtFixedRate(task2, 1, 15, TimeUnit.MINUTES);
 			arg0.getServletContext().setAttribute ("timer", ses);
 		}
 

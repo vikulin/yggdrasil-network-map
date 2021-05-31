@@ -6,9 +6,13 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Writer;
+import java.lang.reflect.Type;
 import java.net.Socket;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
@@ -33,52 +37,63 @@ public class NetworkDHTCrawler {
 	
 	private static final Logger log = LoggerFactory.getLogger(NetworkDHTCrawler.class);
 	
-	private static final String ADMIN_API_HOST="localhost";
+	private static final String ADMIN_API_HOST="172.16.0.135";
 	
 	private static final int ADMIN_API_PORT=9001;
 	
 	private static ExecutorService threadPool;
 	private static Queue<Future<NodeDataPair>> queue;	
-	public static Set<NodeDataPair> nodes;
+	public static Map<String, NodeDataPair> nodes; //node key, ip nodes
+	public static Set<Link> links; //node key, ip links
+	public static long id=0;
 	
-	private void run(NodeData nodeData, Class<?> class_) {
-
-		queue.add(threadPool.submit(new Callable<NodeDataPair>() {
+	private Future<NodeDataPair> run(String key, Class<?> class_) {
+		
+		Future<NodeDataPair> future = threadPool.submit(new Callable<NodeDataPair>() {
 			
 			@Override
 			public NodeDataPair call() throws Exception {
 				log.info("found: "+nodes.size()+" records");
-				final String json = new ApiRequest().dhtPing(nodeData).serialize();
-				final ApiNodesResponse nodesReponse = (ApiNodesResponse)apiRequest(json, class_);
-				if(nodesReponse==null) {
+				final String json = new ApiRequest().getPeers(key).serialize();
+				Object object = apiRequest(json, class_);
+				if(object==null) {
 					return null;
 				}
-				if(nodesReponse.getResponse()==null) {
+				ApiPeersResponse peerReponse = (ApiPeersResponse)object;
+				
+				if(peerReponse.getResponse().entrySet().isEmpty()) {
 					Gson gson = new Gson();
-					log.info("incorrect response: "+gson.toJson(nodesReponse));
+					log.info("incorrect response: "+gson.toJson(peerReponse));
 					return null;
 				}
-				if(nodesReponse.getResponse().getNodes()==null) {
-					Gson gson = new Gson();
-					log.info("incorrect response: "+gson.toJson(nodesReponse));
+				Iterator<Entry<String, Map<String, List<String>>>> it = peerReponse.getResponse().entrySet().iterator();
+				Entry<String, Map<String, List<String>>> peer = it.next();
+				if(peer.getKey().equals("error")) {
 					return null;
 				}
-				final Map<String, NodeData> nodes = nodesReponse.getResponse().getNodes();
-				for(final Entry<String, NodeData> nodeEntry:nodes.entrySet()) {
+				NodeDataPair ndp = new NodeDataPair(peer.getKey(), key);
+				ndp.setId(id++);
+				nodes.put(key, ndp);
+				List<String> keys = peer.getValue().get("keys");
+				for(String k:keys) {
+					links.add(new Link(k, peer.getKey()));
 					//duplicated values are checked by Set
-					if(NetworkDHTCrawler.nodes.contains(new NodeDataPair(nodeEntry.getKey(), nodeEntry.getValue()))) {
+					if(NetworkDHTCrawler.nodes.get(k)!=null) {
 						continue;
 					}
-					NetworkDHTCrawler.nodes.add(new NodeDataPair(nodeEntry.getKey(), nodeEntry.getValue()));
-					NetworkDHTCrawler.this.run(nodeEntry.getValue(), ApiNodesResponse.class);
+					NetworkDHTCrawler.this.run(k, class_).get();
 				}
 				return null;
 			}    
-		}));
+		});
+
+		queue.add(future);
+		
+		return future;
 	}
 	
 	
-	private Object apiRequest(String json, Class<?> class_) {
+	private Object apiRequest(String json, Type peers) {
 		
 		String response = null;
 		byte[] cbuf = new byte[1024];
@@ -115,10 +130,10 @@ public class NetworkDHTCrawler {
 		Gson gson = new Gson();
 		Object apiReponse = null;
 		try {
-			apiReponse = gson.fromJson(response, class_);
+			apiReponse = gson.fromJson(response, peers);
 		} catch(JsonSyntaxException e) {
 			e.printStackTrace();
-			System.out.println(response);
+			System.err.println("error response:\n"+response);
 		}
 		if(apiReponse==null) {
 			System.out.println("No response received");
@@ -130,21 +145,27 @@ public class NetworkDHTCrawler {
 		
 		threadPool = Executors.newFixedThreadPool(10);
 		queue = new ConcurrentLinkedQueue<Future<NodeDataPair>>();
-		nodes = new HashSet<NodeDataPair>();
+		nodes = new HashMap<String, NodeDataPair>();
+		links = new HashSet<Link>();
 		
-		String json = new ApiRequest().getDHT().serialize();
+		String json = new ApiRequest().getPeers("2506485f72886a6729ffa4bdaf270a8801b283d30aed4ea1f14518e5e8f7e9f6").serialize();
 		NetworkDHTCrawler crawler = new NetworkDHTCrawler();
-		ApiDHTResponse dhtReponse = (ApiDHTResponse)crawler.apiRequest(json, ApiDHTResponse.class);
-		if(dhtReponse==null) {
+		
+		ApiPeersResponse peerReponse = (ApiPeersResponse) crawler.apiRequest(json, ApiPeersResponse.class);
+		if(peerReponse==null || peerReponse.getResponse().isEmpty()) {
 			return;
 		}
-		//String json = new ApiRequest().dhtPing("5db525ea8fa6d3f20b5bb3d6d810f047ca447987e177532f78ed01713f459414", "[1 13]").serialize();
-		Map<String, NodeData> localDHT = dhtReponse.getResponse().getDht();
-		
-		for(Entry<String, NodeData> dhtEntry:localDHT.entrySet()) {
-			nodes.add(new NodeDataPair(dhtEntry.getKey(), dhtEntry.getValue()));
-			crawler.run(dhtEntry.getValue(), ApiNodesResponse.class);
+		Entry<String, Map<String, List<String>>> keys = peerReponse.getResponse().entrySet().iterator().next();
+		List<String> k = keys.getValue().get("keys");
+		if(k==null) {
+			return;
 		}
+		String key = k.get(0);
+		NodeDataPair ndp = new NodeDataPair(keys.getKey(), key);
+		ndp.setId(id++);
+		nodes.put(key, ndp);
+		
+		crawler.run(key, ApiPeersResponse.class);
 		for(Future<NodeDataPair> item:queue) {
 			try {
 				NodeDataPair map = item.get();
@@ -152,19 +173,19 @@ public class NetworkDHTCrawler {
 				e.printStackTrace();
 			}
 		}
-		long id = 1;
-		for(NodeDataPair ndp:NetworkDHTCrawler.nodes) {
-			ndp.setId(id);
-			id++;
-		}
+
 		try (Writer writer = new FileWriter(new File(dataPath, "nodes.json"))) {
 		    Gson gson = new GsonBuilder().setPrettyPrinting().create();
 		    gson.toJson(nodes, writer);
 		}
+		try (Writer writer = new FileWriter(new File(dataPath, "links.json"))) {
+		    Gson gson = new GsonBuilder().setPrettyPrinting().create();
+		    gson.toJson(links, writer);
+		}
 		System.out.println("done");
 		threadPool.shutdownNow();
 		try {
-			NodeData2JSGraphConverter.createJs(NetworkDHTCrawler.nodes, dataPath);
+			NodeData2JSGraphConverter.createJs(nodes, links, dataPath);
 		} catch(Exception e) {
 			e.printStackTrace();
 		}

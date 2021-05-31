@@ -6,16 +6,14 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.graphstream.algorithm.BetweennessCentrality;
-import org.graphstream.graph.ElementNotFoundException;
 import org.graphstream.graph.Graph;
 import org.graphstream.graph.implementations.SingleGraph;
 import org.graphstream.ui.graphicGraph.GraphPosLengthUtils;
@@ -30,90 +28,28 @@ import demo.node.NodeDataPair;
  */
 public class NodeData2JSGraphConverter {
 	
-	public static void createJs(Set<NodeDataPair> nodes, String dataPath) throws IOException, ClassNotFoundException {
-		
-		Set<NodeDataPair> unknownNodes = new HashSet<NodeDataPair>();
-
-		Map<String, Long> idByCoordinates = new HashMap<String, Long>();
-		Long unknownIdStartFrom = Long.valueOf(nodes.size()+100);
+	public static void createJs(Map<String, NodeDataPair> nodes, Set<Link> links, String dataPath) throws IOException, ClassNotFoundException {
 		
 		Graph graph = new SingleGraph("Yggdrasil network");
 		Layout layout = new SpringBox(false);
 		graph.addSink(layout);
+		graph.setStrict(false);
 		layout.addAttributeSink(graph);
 		BetweennessCentrality bcb = new BetweennessCentrality();
 		
-		for(NodeDataPair n:nodes) {
-			String coords = n.getNodeData().getCoords().substring(1, n.getNodeData().getCoords().length()-1);
-			idByCoordinates.put(coords, n.getId());
+		for(Entry<String, NodeDataPair> nodeEntry:nodes.entrySet()) {
+			graph.addNode(nodeEntry.getValue().getId()+"");
 		}
-		for(NodeDataPair n:nodes) {
-			String coords = n.getNodeData().getCoords().substring(1, n.getNodeData().getCoords().length()-1);
-			if(coords.equals("")) {
-				continue;
-			}
-			int index = coords.lastIndexOf(' ');
-			if(index<0) {
-				continue;
-			}
-			String from = coords.substring(0, index);
-			
-			String[] array = from.split(" ");
-			List<String> list = Arrays.asList(array);
-			try {
-				for(int i=0;i<list.size();i++) {
-					String parentCoords = list.subList(0, list.size()-i).stream().collect(Collectors.joining(" "));
-					Long idFrom = idByCoordinates.get(parentCoords);
-					//skip null. it occurs when parent coords are unknown
-					if(idFrom==null) {
-						//special condition for unknown parent nodes
-						String recoverCoords = "["+parentCoords+"]";
-						NodeDataPair nodeDataPair = new NodeDataPair(null, new NodeData(null, recoverCoords));
-						nodeDataPair.setId(unknownIdStartFrom);
-						idByCoordinates.put(parentCoords, unknownIdStartFrom);
-						unknownNodes.add(nodeDataPair);
-						unknownIdStartFrom++;
-					}
-				}
-			} catch (Exception e) {
-				System.out.println("from:"+from);
-				e.printStackTrace();
-			}
+		
+		for(Link l:links) {
+			String key = l.getKey();
+			String ip = l.getIp();
+			NodeDataPair ndp = nodes.get(key);
+			Long toId = nodes.entrySet().stream().filter(n->n.getValue().getIp().equals(ip)).findFirst().get().getValue().getId();
+			String edgeId = ndp.getId()+"-"+toId;
+			graph.addEdge(edgeId , ndp.getId()+"", toId+"");
 		}
-		nodes.addAll(unknownNodes);
-		for(NodeDataPair n:nodes) {
-			graph.addNode(n.getId().toString());
-		}
-		for(NodeDataPair n:nodes) {
-			String coords = n.getNodeData().getCoords().substring(1, n.getNodeData().getCoords().length()-1);
-			if(coords.equals("")) {
-				continue;
-			}
-			int index = coords.lastIndexOf(' ');
-			if(index<0) {
-				String fromId = idByCoordinates.get("").toString();
-				String toId =  idByCoordinates.get(coords).toString();
-				graph.addEdge(fromId+"-"+toId, fromId, toId);
-				continue;
-			}
-			
-			String from = coords.substring(0, index);
-			Long idFrom = idByCoordinates.get(from);
-			//skip null. it occurs when parent coords are unknown
-			if(idFrom!=null) {
-				String fromId = idFrom.toString();
-				String toId =  idByCoordinates.get(coords).toString();
-				String edgeId = fromId+"-"+toId;
-				if(graph.getEdge(edgeId)==null) {
-					try {
-						graph.addEdge(edgeId, fromId, toId);
-					} catch (ElementNotFoundException e) {
-						e.printStackTrace();
-						System.out.println("fromId="+fromId+" toId="+toId);
-					}
-				}
-			}
-		}
+		
 		bcb.init(graph);
 		bcb.compute();
 		
@@ -136,31 +72,23 @@ public class NodeData2JSGraphConverter {
 		nodesSb.append(beginNodes);
 		edgesSb.append(beginEdges);
 		
-		for(NodeDataPair n:nodes) {
-			String coords = n.getNodeData().getCoords().substring(1, n.getNodeData().getCoords().length()-1);
+		for(Entry<String, NodeDataPair> nodeEntry:nodes.entrySet()) {
 			int group = 0;
-			if(!coords.equals("")) {
-				group = coords.split(" ").length;
-			}
-			long value = Double.valueOf(graph.getNode(n.getId().toString()).getAttribute("Cb").toString()).longValue()+5;
-			double[] coordinates = GraphPosLengthUtils.nodePosition(graph, n.getId().toString());
-			nodesSb.append(String.format(Locale.ROOT, rowNodes, n.getId(), coords, n.getIp(), value, group, 100*coordinates[0], 100*coordinates[1]));
-
-			if(coords.equals("")) {
-				continue;
-			}
-			int index = coords.lastIndexOf(' ');
-			if(index<0) {
-				edgesSb.append(String.format(rowEdges, idByCoordinates.get(""), idByCoordinates.get(coords), value));
-				continue;
-			}
+			String label = "";
+			long value = Double.valueOf(graph.getNode(nodeEntry.getValue().getId().toString()).getAttribute("Cb").toString()).longValue()+5;
+			double[] coordinates = GraphPosLengthUtils.nodePosition(graph, nodeEntry.getValue().getId().toString());
+			nodesSb.append(String.format(Locale.ROOT, rowNodes, nodeEntry.getValue().getId(), label, nodeEntry.getValue().getIp(), value, group, 100*coordinates[0], 100*coordinates[1]));
+		}
+		
+		int value = 1;
+		
+		for(Link l:links) {
+			String key = l.getKey();
+			String ip = l.getIp();
+			NodeDataPair ndp = nodes.get(key);
+			Long toId = nodes.entrySet().stream().filter(n->n.getValue().getIp().equals(ip)).findFirst().get().getValue().getId();
 			
-			String from = coords.substring(0, index);
-			Long idFrom = idByCoordinates.get(from);
-			//skip null. it occurs when parent coords are unknown
-			if(idFrom!=null) {
-				edgesSb.append(String.format(rowEdges, idFrom, idByCoordinates.get(coords), value));
-			}
+			edgesSb.append(String.format(rowEdges, ndp.getId(), toId, value));
 		}
 		
 		nodesSb.append(endNodes);
