@@ -73,10 +73,11 @@ public class NodeData2JSGraphConverter {
 		edgesSb.append(beginEdges);
 		
 		for(Entry<String, NodeDataPair> nodeEntry:nodes.entrySet()) {
-			int group = 0;
+			
 			String ip = nodeEntry.getValue().getIp();
 			String label = ip.substring(ip.lastIndexOf(':') + 1);
 			long value = Double.valueOf(graph.getNode(nodeEntry.getValue().getId().toString()).getAttribute("Cb").toString()).longValue()+5;
+			long group = value;
 			double[] coordinates = GraphPosLengthUtils.nodePosition(graph, nodeEntry.getValue().getId().toString());
 			nodesSb.append(String.format(Locale.ROOT, rowNodes, nodeEntry.getValue().getId(), label, ip, value, group, 100*coordinates[0], 100*coordinates[1]));
 		}

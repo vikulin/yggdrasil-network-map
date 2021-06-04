@@ -37,7 +37,7 @@ public class NetworkDHTCrawler {
 	
 	private static final Logger log = LoggerFactory.getLogger(NetworkDHTCrawler.class);
 	
-	private static final String ADMIN_API_HOST="172.16.0.135";
+	private static final String ADMIN_API_HOST="localhost";
 	
 	private static final int ADMIN_API_PORT=9001;
 	
@@ -193,6 +193,6 @@ public class NetworkDHTCrawler {
 	}
 	
 	public static void main(String args[]) throws InterruptedException, ExecutionException, IOException, ClassNotFoundException {
-		run(".");
+		run("");
 	}
 }
