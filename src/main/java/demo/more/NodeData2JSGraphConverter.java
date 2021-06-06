@@ -5,11 +5,14 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -40,11 +43,13 @@ public class NodeData2JSGraphConverter {
 		for(Entry<String, NodeDataPair> nodeEntry:nodes.entrySet()) {
 			graph.addNode(nodeEntry.getValue().getId()+"");
 		}
-		
 		for(Link l:links) {
 			String key = l.getKey();
 			String ip = l.getIp();
 			NodeDataPair ndp = nodes.get(key);
+			if(ndp==null) {
+				continue;
+			}
 			Long toId = nodes.entrySet().stream().filter(n->n.getValue().getIp().equals(ip)).findFirst().get().getValue().getId();
 			String edgeId = ndp.getId()+"-"+toId;
 			graph.addEdge(edgeId , ndp.getId()+"", toId+"");
@@ -88,6 +93,9 @@ public class NodeData2JSGraphConverter {
 			String key = l.getKey();
 			String ip = l.getIp();
 			NodeDataPair ndp = nodes.get(key);
+			if(ndp==null) {
+				continue;
+			}
 			Long toId = nodes.entrySet().stream().filter(n->n.getValue().getIp().equals(ip)).findFirst().get().getValue().getId();
 			
 			edgesSb.append(String.format(rowEdges, ndp.getId(), toId, value));
