@@ -81,7 +81,7 @@ public class NetworkDHTCrawler {
 					if(NetworkDHTCrawler.nodes.get(k)!=null) {
 						continue;
 					}
-					queue.add(NetworkDHTCrawler.this.run(k, class_));
+					NetworkDHTCrawler.this.run(k, class_).get();
 				}
 				return null;
 			}    
