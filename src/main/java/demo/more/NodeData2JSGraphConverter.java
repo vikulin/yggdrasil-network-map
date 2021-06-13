@@ -17,7 +17,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.graphstream.algorithm.BetweennessCentrality;
+import org.graphstream.graph.EdgeRejectedException;
 import org.graphstream.graph.Graph;
+import org.graphstream.graph.IdAlreadyInUseException;
 import org.graphstream.graph.implementations.SingleGraph;
 import org.graphstream.ui.graphicGraph.GraphPosLengthUtils;
 import org.graphstream.ui.layout.Layout;
@@ -36,7 +38,7 @@ public class NodeData2JSGraphConverter {
 		Graph graph = new SingleGraph("Yggdrasil network");
 		Layout layout = new SpringBox(false);
 		graph.addSink(layout);
-		graph.setStrict(false);
+		graph.setStrict(true);
 		layout.addAttributeSink(graph);
 		BetweennessCentrality bcb = new BetweennessCentrality();
 		
@@ -52,7 +54,11 @@ public class NodeData2JSGraphConverter {
 			}
 			Long toId = nodes.entrySet().stream().filter(n->n.getValue().getIp().equals(ip)).findFirst().get().getValue().getId();
 			String edgeId = ndp.getId()+"-"+toId;
-			graph.addEdge(edgeId , ndp.getId()+"", toId+"");
+			try {
+				graph.addEdge(edgeId , ndp.getId()+"", toId+"");
+			} catch (EdgeRejectedException e1) {
+				System.err.println("an existing edge");
+			}
 		}
 		
 		bcb.init(graph);
@@ -97,6 +103,11 @@ public class NodeData2JSGraphConverter {
 				continue;
 			}
 			Long toId = nodes.entrySet().stream().filter(n->n.getValue().getIp().equals(ip)).findFirst().get().getValue().getId();
+			String edgeId = ndp.getId()+"-"+toId;
+			if(graph.getEdge(edgeId)!=null) {
+				continue;
+			}
+			//Long toId = nodes.entrySet().stream().filter(n->n.getValue().getIp().equals(ip)).findFirst().get().getValue().getId();
 			
 			edgesSb.append(String.format(rowEdges, ndp.getId(), toId, value));
 		}
