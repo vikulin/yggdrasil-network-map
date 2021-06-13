@@ -41,9 +41,9 @@ public class NetworkDHTCrawler {
 	private static Queue<Future<NodeDataPair>> queue;	
 	public static Set<NodeDataPair> nodes;
 	
-	private void run(NodeData nodeData, Class<?> class_) {
+	private Future<NodeDataPair> run(NodeData nodeData, Class<?> class_) {
 
-		queue.add(threadPool.submit(new Callable<NodeDataPair>() {
+		Future<NodeDataPair> future = threadPool.submit(new Callable<NodeDataPair>() {
 			
 			@Override
 			public NodeDataPair call() throws Exception {
@@ -70,13 +70,15 @@ public class NetworkDHTCrawler {
 						continue;
 					}
 					NetworkDHTCrawler.nodes.add(new NodeDataPair(nodeEntry.getKey(), nodeEntry.getValue()));
-					NetworkDHTCrawler.this.run(nodeEntry.getValue(), ApiNodesResponse.class);
+					queue.add(NetworkDHTCrawler.this.run(nodeEntry.getValue(), ApiNodesResponse.class));
 				}
 				return null;
 			}    
-		}));
+		});
+		
+		queue.add(future);
+		return future;
 	}
-	
 	
 	private Object apiRequest(String json, Class<?> class_) {
 		
@@ -128,7 +130,7 @@ public class NetworkDHTCrawler {
 	
 	public static void run(String dataPath) throws InterruptedException, ExecutionException, IOException, ClassNotFoundException {
 		
-		threadPool = Executors.newFixedThreadPool(10);
+		threadPool = Executors.newFixedThreadPool(30);
 		queue = new ConcurrentLinkedQueue<Future<NodeDataPair>>();
 		nodes = new HashSet<NodeDataPair>();
 		
@@ -147,7 +149,7 @@ public class NetworkDHTCrawler {
 		}
 		for(Future<NodeDataPair> item:queue) {
 			try {
-				NodeDataPair map = item.get();
+				item.get();
 			} catch (IllegalArgumentException e) {
 				e.printStackTrace();
 			}
