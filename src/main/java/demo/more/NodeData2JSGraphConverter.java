@@ -5,21 +5,17 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.graphstream.algorithm.BetweennessCentrality;
 import org.graphstream.graph.EdgeRejectedException;
 import org.graphstream.graph.Graph;
-import org.graphstream.graph.IdAlreadyInUseException;
 import org.graphstream.graph.implementations.SingleGraph;
 import org.graphstream.ui.graphicGraph.GraphPosLengthUtils;
 import org.graphstream.ui.layout.Layout;
@@ -87,10 +83,14 @@ public class NodeData2JSGraphConverter {
 			
 			String ip = nodeEntry.getValue().getIp();
 			String label = ip.substring(ip.lastIndexOf(':') + 1);
-			long value = Double.valueOf(graph.getNode(nodeEntry.getValue().getId().toString()).getAttribute("Cb").toString()).longValue()+5;
-			long group = value;
-			double[] coordinates = GraphPosLengthUtils.nodePosition(graph, nodeEntry.getValue().getId().toString());
-			nodesSb.append(String.format(Locale.ROOT, rowNodes, nodeEntry.getValue().getId(), label, ip, value, group, 100*coordinates[0], 100*coordinates[1]));
+			try {
+				long value = Double.valueOf(graph.getNode(nodeEntry.getValue().getId().toString()).getAttribute("Cb").toString()).longValue()+5;
+				long group = value;
+				double[] coordinates = GraphPosLengthUtils.nodePosition(graph, nodeEntry.getValue().getId().toString());
+				nodesSb.append(String.format(Locale.ROOT, rowNodes, nodeEntry.getValue().getId(), label, ip, value, group, 100*coordinates[0], 100*coordinates[1]));
+			} catch (NullPointerException e) {
+				e.printStackTrace();
+			}
 		}
 		
 		int value = 1;

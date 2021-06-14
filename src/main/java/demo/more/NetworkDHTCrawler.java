@@ -8,8 +8,8 @@ import java.io.InputStream;
 import java.io.Writer;
 import java.lang.reflect.Type;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -18,11 +18,14 @@ import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,22 +40,25 @@ public class NetworkDHTCrawler {
 	
 	private static final Logger log = LoggerFactory.getLogger(NetworkDHTCrawler.class);
 	
-	private static final String ADMIN_API_HOST="localhost";
+	private static final String ADMIN_API_HOST="172.16.0.135";
 	
 	private static final int ADMIN_API_PORT=9001;
 	
 	private static ExecutorService threadPool;
-	private static Queue<Future<NodeDataPair>> queue;	
+	private static Queue<Future<String>> queue;	
 	public static Map<String, NodeDataPair> nodes; //node key, ip nodes
 	public static Set<Link> links; //node key, ip links
-	public static long id=0;
+	public static volatile long id=0;
+	public static List<String> resultList = new ArrayList<String>();
 	
-	private Future<NodeDataPair> run(String key, Class<?> class_) {
+	public static Gson gson = new Gson();
+	
+	private Future<String> run(String key, Class<?> class_) {
 		
-		Future<NodeDataPair> future = threadPool.submit(new Callable<NodeDataPair>() {
+		Future<String> future = threadPool.submit(new Callable<String>() {
 			
 			@Override
-			public NodeDataPair call() throws Exception {
+			public String call() throws Exception {
 				log.info("found: "+nodes.size()+" records");
 				final String json = new ApiRequest().getPeers(key).serialize();
 				Object object = apiRequest(json, class_);
@@ -62,14 +68,14 @@ public class NetworkDHTCrawler {
 				ApiPeersResponse peerReponse = (ApiPeersResponse)object;
 				
 				if(peerReponse.getResponse().entrySet().isEmpty()) {
-					Gson gson = new Gson();
+					
 					log.info("incorrect response: "+gson.toJson(peerReponse));
-					return null;
+					return gson.toJson(peerReponse);
 				}
 				Iterator<Entry<String, Map<String, List<String>>>> it = peerReponse.getResponse().entrySet().iterator();
 				Entry<String, Map<String, List<String>>> peer = it.next();
 				if(peer.getKey().equals("error")) {
-					return null;
+					return gson.toJson(peerReponse);
 				}
 				NodeDataPair ndp = new NodeDataPair(peer.getKey(), key);
 				ndp.setId(id++);
@@ -81,9 +87,9 @@ public class NetworkDHTCrawler {
 					if(NetworkDHTCrawler.nodes.get(k)!=null) {
 						continue;
 					}
-					NetworkDHTCrawler.this.run(k, class_).get();
+					NetworkDHTCrawler.this.run(k, class_).get(100l, TimeUnit.SECONDS);
 				}
-				return null;
+				return gson.toJson(peerReponse);
 			}    
 		});
 
@@ -144,8 +150,8 @@ public class NetworkDHTCrawler {
 	public static void run(String dataPath) throws InterruptedException, ExecutionException, IOException, ClassNotFoundException {
 		
 		threadPool = Executors.newFixedThreadPool(10);
-		queue = new ConcurrentLinkedQueue<Future<NodeDataPair>>();
-		nodes = new HashMap<String, NodeDataPair>();
+		queue = new ConcurrentLinkedQueue<Future<String>>();
+		nodes = new ConcurrentHashMap<String, NodeDataPair>();
 		links = new HashSet<Link>();
 		
 		String json = new ApiRequest().getPeers("2506485f72886a6729ffa4bdaf270a8801b283d30aed4ea1f14518e5e8f7e9f6").serialize();
@@ -166,10 +172,10 @@ public class NetworkDHTCrawler {
 		nodes.put(key, ndp);
 		
 		crawler.run(key, ApiPeersResponse.class);
-		for(Future<NodeDataPair> item:queue) {
+		for(Future<String> item:queue) {
 			try {
-				NodeDataPair map = item.get();
-			} catch (IllegalArgumentException e) {
+				resultList.add(item.get(600l, TimeUnit.SECONDS));
+			} catch (IllegalArgumentException | TimeoutException e) {
 				e.printStackTrace();
 			}
 		}
@@ -193,6 +199,6 @@ public class NetworkDHTCrawler {
 	}
 	
 	public static void main(String args[]) throws InterruptedException, ExecutionException, IOException, ClassNotFoundException {
-		run("");
+		run(".");
 	}
 }
