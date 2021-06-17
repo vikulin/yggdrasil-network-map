@@ -1,52 +1,72 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://xmlns.jcp.org/xml/ns/javaee" xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd" id="WebApp_ID" version="3.1">
-  <display-name>yggdrasil-network-map</display-name>
-  <listener>
-  	<description>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+	xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd"
+	id="WebApp_ID" version="3.1">
+	<display-name>yggdrasil-network-map</display-name>
+	<listener>
+		<description>
   	Used to cleanup when a session is destroyed</description>
-  	<display-name>ZK Session cleaner</display-name>
-  	<listener-class>org.zkoss.zk.ui.http.HttpSessionListener</listener-class>
-  </listener>
-  <absolute-ordering />
-  <servlet>
-  	<description>
+		<display-name>ZK Session cleaner</display-name>
+		<listener-class>org.zkoss.zk.ui.http.HttpSessionListener</listener-class>
+	</listener>
+	<absolute-ordering />
+	<servlet>
+		<description>
   	The ZK loader for ZUML pages</description>
-  	<servlet-name>zkLoader</servlet-name>
-  	<servlet-class>org.zkoss.zk.ui.http.DHtmlLayoutServlet</servlet-class>
-  	<init-param>
-  		<param-name>update-uri</param-name>
-  		<param-value>/zkau</param-value>
-  	</init-param>
-  	<load-on-startup>1</load-on-startup>
-  </servlet>
-  <servlet>
-  	<description>
+		<servlet-name>zkLoader</servlet-name>
+		<servlet-class>org.zkoss.zk.ui.http.DHtmlLayoutServlet</servlet-class>
+		<init-param>
+			<param-name>update-uri</param-name>
+			<param-value>/zkau</param-value>
+		</init-param>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+	<servlet>
+		<description>
   	The asynchronous update engine for ZK</description>
-  	<servlet-name>auEngine</servlet-name>
-  	<servlet-class>org.zkoss.zk.au.http.DHtmlUpdateServlet</servlet-class>
-  </servlet>
-  <servlet-mapping>
-  	<servlet-name>zkLoader</servlet-name>
-  	<url-pattern>*.zul</url-pattern>
-  </servlet-mapping>
-  <servlet-mapping>
-  	<servlet-name>zkLoader</servlet-name>
-  	<url-pattern>*.zhtml</url-pattern>
-  </servlet-mapping>
-  <servlet-mapping>
-  	<servlet-name>auEngine</servlet-name>
-  	<url-pattern>/zkau/*</url-pattern>
-  </servlet-mapping>
-  <welcome-file-list>
-    <welcome-file>index.html</welcome-file>
-    <welcome-file>index.htm</welcome-file>
-    <welcome-file>index.jsp</welcome-file>
-    <welcome-file>default.html</welcome-file>
-    <welcome-file>default.htm</welcome-file>
-    <welcome-file>default.jsp</welcome-file>
-    <welcome-file>index.zul</welcome-file>
-  </welcome-file-list>
-  	<listener>
-    	<listener-class>listener.ScheduleYggdrasilNetworkMapListener</listener-class>
-  	</listener>
+		<servlet-name>auEngine</servlet-name>
+		<servlet-class>org.zkoss.zk.au.http.DHtmlUpdateServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>zkLoader</servlet-name>
+		<url-pattern>*.zul</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>zkLoader</servlet-name>
+		<url-pattern>*.zhtml</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>auEngine</servlet-name>
+		<url-pattern>/zkau/*</url-pattern>
+	</servlet-mapping>
+	<welcome-file-list>
+		<welcome-file>index.html</welcome-file>
+		<welcome-file>index.htm</welcome-file>
+		<welcome-file>index.jsp</welcome-file>
+		<welcome-file>default.html</welcome-file>
+		<welcome-file>default.htm</welcome-file>
+		<welcome-file>default.jsp</welcome-file>
+		<welcome-file>index.zul</welcome-file>
+	</welcome-file-list>
+	<listener>
+		<listener-class>listener.ScheduleYggdrasilNetworkMapListener</listener-class>
+	</listener>
+	<listener>
+		<listener-class>listener.ScheduleYggdrasilPeerReaderListener</listener-class>
+	</listener>
+	<servlet>
+		<servlet-name>RiV mesh Service</servlet-name>
+		<servlet-class>org.glassfish.jersey.servlet.ServletContainer</servlet-class>
+		<init-param>
+			<param-name>jersey.config.server.provider.packages</param-name>
+			<param-value>org.riv.mesh.rest</param-value>
+		</init-param>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>RiV mesh Service</servlet-name>
+		<url-pattern>/rest/*</url-pattern>
+	</servlet-mapping>
+
 </web-app>

@@ -1,7 +1,5 @@
 package demo.more;
 
-import demo.node.NodeDataPair;
-
 public class Link {
 	
 	public Link(String key, String ip) {
@@ -31,7 +29,7 @@ public class Link {
 	
 	@Override
 	public boolean equals(Object obj) {
-		return this.key!=null && this.ip!=null && obj instanceof Link && this.key.equals(((NodeDataPair)obj).getKey()) && this.ip.equals(((NodeDataPair)obj).getIp());
+		return this.key!=null && this.ip!=null && obj instanceof Link && this.key.equals(((Link)obj).getKey()) && this.ip.equals(((Link)obj).getIp());
 	}
 	
 	@Override

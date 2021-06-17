@@ -8,18 +8,15 @@ import java.io.InputStream;
 import java.io.Writer;
 import java.lang.reflect.Type;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -45,11 +42,9 @@ public class NetworkDHTCrawler {
 	private static final int ADMIN_API_PORT=9001;
 	
 	private static ExecutorService threadPool;
-	private static Queue<Future<String>> queue;	
 	public static Map<String, NodeDataPair> nodes; //node key, ip nodes
 	public static Set<Link> links; //node key, ip links
 	public static volatile long id=0;
-	public static List<String> resultList = new ArrayList<String>();
 	
 	public static Gson gson = new Gson();
 	
@@ -92,8 +87,6 @@ public class NetworkDHTCrawler {
 				return gson.toJson(peerReponse);
 			}    
 		});
-
-		queue.add(future);
 		
 		return future;
 	}
@@ -149,8 +142,7 @@ public class NetworkDHTCrawler {
 	
 	public static void run(String dataPath) throws InterruptedException, ExecutionException, IOException, ClassNotFoundException {
 		
-		threadPool = Executors.newFixedThreadPool(10);
-		queue = new ConcurrentLinkedQueue<Future<String>>();
+		threadPool = Executors.newFixedThreadPool(20);
 		nodes = new ConcurrentHashMap<String, NodeDataPair>();
 		links = new HashSet<Link>();
 		
@@ -171,13 +163,14 @@ public class NetworkDHTCrawler {
 		ndp.setId(id++);
 		nodes.put(key, ndp);
 		
-		crawler.run(key, ApiPeersResponse.class);
-		for(Future<String> item:queue) {
-			try {
-				resultList.add(item.get(600l, TimeUnit.SECONDS));
-			} catch (IllegalArgumentException | TimeoutException e) {
-				e.printStackTrace();
-			}
+		try {
+			crawler.run(key, ApiPeersResponse.class).get(600l, TimeUnit.SECONDS);
+		} catch (InterruptedException e1) {
+			e1.printStackTrace();
+		} catch (ExecutionException e1) {
+			e1.printStackTrace();
+		} catch (TimeoutException e1) {
+			e1.printStackTrace();
 		}
 
 		try (Writer writer = new FileWriter(new File(dataPath, "nodes.json"))) {
