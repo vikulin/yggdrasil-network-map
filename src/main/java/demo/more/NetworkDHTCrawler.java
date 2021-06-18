@@ -9,6 +9,7 @@ import java.io.Writer;
 import java.lang.reflect.Type;
 import java.net.Socket;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -34,6 +35,8 @@ import com.google.gson.JsonSyntaxException;
 import demo.node.NodeDataPair;
 
 public class NetworkDHTCrawler {
+	
+	private static final String MAP_HISTORY_PATH = "/opt/tomcat/yggdrasil-map-history";
 	
 	private static final Logger log = LoggerFactory.getLogger(NetworkDHTCrawler.class);
 	
@@ -141,7 +144,7 @@ public class NetworkDHTCrawler {
 	}
 	
 	public static void run(String dataPath) throws InterruptedException, ExecutionException, IOException, ClassNotFoundException {
-		
+		id = 0;
 		threadPool = Executors.newFixedThreadPool(20);
 		nodes = new ConcurrentHashMap<String, NodeDataPair>();
 		links = new HashSet<Link>();
@@ -172,11 +175,13 @@ public class NetworkDHTCrawler {
 		} catch (TimeoutException e1) {
 			e1.printStackTrace();
 		}
-
+		long timestamp = new Date().getTime();
+		new File(dataPath, "nodes.json").renameTo(new File(MAP_HISTORY_PATH, "nodes-"+timestamp+".json"));
 		try (Writer writer = new FileWriter(new File(dataPath, "nodes.json"))) {
 		    Gson gson = new GsonBuilder().setPrettyPrinting().create();
 		    gson.toJson(nodes, writer);
 		}
+		new File(dataPath, "links.json").renameTo(new File(MAP_HISTORY_PATH, "links-"+timestamp+".json"));
 		try (Writer writer = new FileWriter(new File(dataPath, "links.json"))) {
 		    Gson gson = new GsonBuilder().setPrettyPrinting().create();
 		    gson.toJson(links, writer);
