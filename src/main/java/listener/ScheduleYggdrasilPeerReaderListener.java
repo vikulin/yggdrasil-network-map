@@ -30,7 +30,9 @@ public class ScheduleYggdrasilPeerReaderListener implements ServletContextListen
 	public static final Map<String, LinkedHashMap<String, PeerInfo>> peersPerCountry = new TreeMap<String, LinkedHashMap<String, PeerInfo>>();
 	
 	Pattern IPv4_PEER_REGEXP = Pattern.compile("(((tcp)|(udp)|(tls))\\://(((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)\\.){3}(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d))\\:\\d{1,5})");  
+	Pattern IPv6_PEER_REGEXP = Pattern.compile("((tcp)|(udp)|(tls))\\://\\[(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))\\]\\:\\d{1,5}");
 	Pattern DOMAIN_NAME_PEER_REGEXP = Pattern.compile("(((tcp)|(udp)|(tls))\\://([\\w\\-]+\\.)+[a-zA-Z]+\\:\\d{1,5})");
+	
 	
 	
  	@Override
@@ -78,9 +80,15 @@ public class ScheduleYggdrasilPeerReaderListener implements ServletContextListen
 	 					try {
 							List<String> content = FileUtils.readLines(countryNext, "UTF-8");
 							for(String c:content) {
-								Matcher mIp = IPv4_PEER_REGEXP.matcher(c);
-								while (mIp.find()) {
-									String peer = mIp.group(0);
+								Matcher mIpv4 = IPv4_PEER_REGEXP.matcher(c);
+								while (mIpv4.find()) {
+									String peer = mIpv4.group(0);
+									PeerInfo pi = new PeerInfo(true, null, null, 0);
+									peerInfoMap.put(peer, pi);
+								}
+								Matcher mIpv6 = IPv6_PEER_REGEXP.matcher(c);
+								while (mIpv6.find()) {
+									String peer = mIpv6.group(0);
 									PeerInfo pi = new PeerInfo(true, null, null, 0);
 									peerInfoMap.put(peer, pi);
 								}
