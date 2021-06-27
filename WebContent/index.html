@@ -117,17 +117,6 @@
 					stabilization: false,
 					wind: { x: 0, y: 0 },
 				  },
-				  configure: {
-					filter: function (option, path) {
-					  if (path.indexOf("physics") !== -1) {
-						return true;
-					  }
-					  if (path.indexOf("smooth") !== -1 || option === "smooth") {
-						return true;
-					  }
-					  return false;
-					},
-				},
 			};
 			var data = {
 				nodes : nodesDataset,
