@@ -15,6 +15,12 @@ public class ApiRequest {
 		return this;
 	}
 	
+	public ApiRequest getDHT(String key){
+		map.put("request", "debug_remotegetdht");
+		map.put("key", key);
+		return this;
+	}
+	
 	public String serialize() {
 		Gson gson = new Gson();
 		return gson.toJson(map);
