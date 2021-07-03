@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -48,7 +49,11 @@ public class NodeData2JSGraphConverter {
 			if(ndp==null) {
 				continue;
 			}
-			Long toId = nodes.entrySet().stream().filter(n->n.getValue().getIp().equals(ip)).findFirst().get().getValue().getId();
+			Optional<Entry<String, NodeDataPair>> element = nodes.entrySet().stream().filter(n->n.getValue().getIp().equals(ip)).findFirst();
+			if(element.isEmpty()) {
+				continue;
+			}
+			Long toId = element.get().getValue().getId();
 			String edgeId = ndp.getId()+"-"+toId;
 			try {
 				graph.addEdge(edgeId , ndp.getId()+"", toId+"");

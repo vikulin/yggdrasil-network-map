@@ -1,6 +1,6 @@
 package demo.more;
 
-public class Link {
+public class Link implements Comparable {
 	
 	public Link(String key, String ip) {
 		this.key = key;
@@ -36,5 +36,14 @@ public class Link {
 	public int hashCode() {
 		String key = this.key+this.ip;
 		return key.hashCode();
+	}
+
+	@Override
+	public int compareTo(Object o) {
+		if(this.equals(o)) {
+			return 0;
+		} else {
+			return this.ip.compareTo(((Link)o).getIp());
+		}
 	}
 }

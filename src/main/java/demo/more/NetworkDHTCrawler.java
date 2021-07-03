@@ -10,7 +10,6 @@ import java.lang.reflect.Type;
 import java.net.Socket;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -18,6 +17,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -147,7 +147,7 @@ public class NetworkDHTCrawler {
 		id = 0;
 		threadPool = Executors.newFixedThreadPool(20);
 		nodes = new ConcurrentHashMap<String, NodeDataPair>();
-		links = new HashSet<Link>();
+		links =  new ConcurrentSkipListSet<Link>();
 		
 		String json = new ApiRequest().getPeers("2506485f72886a6729ffa4bdaf270a8801b283d30aed4ea1f14518e5e8f7e9f6").serialize();
 		NetworkDHTCrawler crawler = new NetworkDHTCrawler();
