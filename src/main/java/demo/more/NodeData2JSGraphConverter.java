@@ -6,20 +6,27 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.graphstream.algorithm.BetweennessCentrality;
+import org.graphstream.graph.Edge;
 import org.graphstream.graph.EdgeRejectedException;
 import org.graphstream.graph.Graph;
+import org.graphstream.graph.Node;
+import org.graphstream.graph.NodeFactory;
 import org.graphstream.graph.implementations.SingleGraph;
 import org.graphstream.ui.graphicGraph.GraphPosLengthUtils;
 import org.graphstream.ui.layout.Layout;
 import org.graphstream.ui.layout.springbox.implementations.SpringBox;
+
+import com.google.gson.Gson;
 
 import demo.node.NodeDataPair;
 
@@ -37,9 +44,19 @@ public class NodeData2JSGraphConverter {
 		graph.setStrict(true);
 		layout.addAttributeSink(graph);
 		BetweennessCentrality bcb = new BetweennessCentrality();
+		NodeFactory<? extends Node> nf = graph.nodeFactory();
 		
 		for(Entry<String, NodeDataPair> nodeEntry:nodes.entrySet()) {
-			graph.addNode(nodeEntry.getValue().getId()+"");
+			String nodeId = nodeEntry.getValue().getId()+"";
+			Node node = nf.newInstance(nodeId, graph);
+			String ip = nodeEntry.getValue().getIp();
+			if(ip==null) {
+				System.err.println("ip is null for node:"+nodeId);
+				
+			}
+			node.setAttribute("ip", ip);
+			node.setAttribute("key", nodeEntry.getKey());
+			graph.addNode(nodeId);
 		}
 		for(Link l:links) {
 			String key = l.getKey();
@@ -48,15 +65,26 @@ public class NodeData2JSGraphConverter {
 			if(ndp==null) {
 				continue;
 			}
-			Long toId = nodes.entrySet().stream().filter(n->n.getValue().getIp().equals(ip)).findFirst().get().getValue().getId();
+			Optional<Entry<String, NodeDataPair>> element = nodes.entrySet().stream().filter(n->n.getValue().getIp().equals(ip)).findFirst();
+			if(element.isEmpty()) {
+				continue;
+			}
+			Long toId = element.get().getValue().getId();
+			if(ndp.getId().longValue()==toId.longValue()) {
+				//skip self links
+				continue;
+			}
 			String edgeId = ndp.getId()+"-"+toId;
+			System.out.println("added adge:"+edgeId);
 			try {
 				graph.addEdge(edgeId , ndp.getId()+"", toId+"");
 			} catch (EdgeRejectedException e1) {
 				System.err.println("an existing edge");
 			}
 		}
-		
+		int nodesCount = graph.getNodeCount();
+		System.out.println("nodesCount:"+nodesCount);
+		System.out.println("edgesCount:"+graph.getEdgeCount());
 		bcb.init(graph);
 		bcb.compute();
 		
@@ -68,8 +96,8 @@ public class NodeData2JSGraphConverter {
 		StringBuilder nodesSb = new StringBuilder();
 		StringBuilder edgesSb = new StringBuilder();
 		String beginNodes = "var nodes = [\n";
-		String rowNodes = "{id: %d, label: \"%s\", title: \"%s\", value: %d, group: %d, x: %.2f, y: %.2f},\n";
-		String rowEdges = "{from: %d, to: %d, value: %d},\n";
+		String rowNodes = "{id: %s, label: \"%s\", title: \"%s\", value: %d, group: %d, x: %.2f, y: %.2f},\n";
+		String rowEdges = "{from: %s, to: %s, value: %d},\n";
 		String endNodes = "];\n";
 		String beginEdges = "var edges = [\n";
 		String endEdges = "];\n";
@@ -78,40 +106,29 @@ public class NodeData2JSGraphConverter {
 		String linksNumber = "var linksNumber = %d;";
 		nodesSb.append(beginNodes);
 		edgesSb.append(beginEdges);
-		
-		for(Entry<String, NodeDataPair> nodeEntry:nodes.entrySet()) {
-			
-			String ip = nodeEntry.getValue().getIp();
-			String label = ip.substring(ip.lastIndexOf(':') + 1);
-			try {
-				long value = Double.valueOf(graph.getNode(nodeEntry.getValue().getId().toString()).getAttribute("Cb").toString()).longValue()+5;
-				long group = value;
-				double[] coordinates = GraphPosLengthUtils.nodePosition(graph, nodeEntry.getValue().getId().toString());
-				nodesSb.append(String.format(Locale.ROOT, rowNodes, nodeEntry.getValue().getId(), label, ip, value, group, 100*coordinates[0], 100*coordinates[1]));
-			} catch (NullPointerException e) {
-				e.printStackTrace();
+		Iterator<Node> nodeIt = graph.iterator();
+		while(nodeIt.hasNext()) {
+			Node node = nodeIt.next();
+			Object ip = node.getAttribute("ip");
+			if(ip==null) {
+				ip=":";
 			}
+			String label = ip.toString().substring(ip.toString().lastIndexOf(':') + 1);
+			long value = Double.valueOf(node.getAttribute("Cb").toString()).longValue()+5;
+			long group = value;
+			double[] coordinates = GraphPosLengthUtils.nodePosition(graph, node.getId());
+			nodesSb.append(String.format(Locale.ROOT, rowNodes, node.getId(), label, ip, value, group, 100*coordinates[0], 100*coordinates[1]));
 		}
 		
 		int value = 1;
 		
-		for(Link l:links) {
-			String key = l.getKey();
-			String ip = l.getIp();
-			NodeDataPair ndp = nodes.get(key);
-			if(ndp==null) {
-				continue;
-			}
-			Long toId = nodes.entrySet().stream().filter(n->n.getValue().getIp().equals(ip)).findFirst().get().getValue().getId();
-			String edgeId = ndp.getId()+"-"+toId;
-			if(graph.getEdge(edgeId)!=null) {
-				continue;
-			}
-			//Long toId = nodes.entrySet().stream().filter(n->n.getValue().getIp().equals(ip)).findFirst().get().getValue().getId();
-			
-			edgesSb.append(String.format(rowEdges, ndp.getId(), toId, value));
+		int edgesCount = graph.getEdgeCount();
+		for(int index = 0; index < edgesCount; edgesCount++) {
+			Edge edge = graph.getEdge(index);
+			edgesSb.append(String.format(rowEdges, edge.getNode0().getId(), edge.getNode1().getId(), value));
 		}
-		
+
+		System.out.println(new Gson().toJson(nodes));
 		nodesSb.append(endNodes);
 		edgesSb.append(endEdges);
 		
