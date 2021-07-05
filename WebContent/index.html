@@ -3,12 +3,10 @@
 <head>
 <meta http-equiv="content-type" content="text/html; charset=UTF8" />
 <link rel="shortcut icon" href="favicon.ico" type="image/x-icon"/>
-<title>Yggdrasil network map</title>
+<title>Yggdrasil v0.4 network map</title>
 
-<script type="text/javascript"
-	src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
-
-<script src="data/graph-data.js"></script>
+<script type="text/javascript" src="js/vis-network.min.js"></script>
+<script type="text/javascript" src="data/graph-data.js"></script>
 
 <style type="text/css">
 #mynetwork {
@@ -115,7 +113,10 @@
 					shape : "dot",
 					font:{color:'#b3b3b3'}
 				},
-				physics : false,
+				 physics: {
+					stabilization: false,
+					wind: { x: 0, y: 0 },
+				  },
 			};
 			var data = {
 				nodes : nodesDataset,

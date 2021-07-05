@@ -6,81 +6,96 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Writer;
+import java.lang.reflect.Type;
 import java.net.Socket;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 
 import demo.node.NodeDataPair;
 
 public class NetworkDHTCrawler {
 	
+	private static final String MAP_HISTORY_PATH = "/opt/tomcat/yggdrasil-map-history";
+	
 	private static final Logger log = LoggerFactory.getLogger(NetworkDHTCrawler.class);
 	
-	private static final String ADMIN_API_HOST="localhost";
+	private static final String ADMIN_API_HOST="192.168.1.106";
 	
 	private static final int ADMIN_API_PORT=9001;
 	
 	private static ExecutorService threadPool;
-	private static Queue<Future<NodeDataPair>> queue;	
-	public static Set<NodeDataPair> nodes;
+	public volatile static Map<String, NodeDataPair> nodes; //node key, ip nodes
+	public volatile static Set<Link> links; //node key, ip links
+	public volatile static long id=0;
 	
-	private Future<NodeDataPair> run(NodeData nodeData, Class<?> class_) {
-
-		Future<NodeDataPair> future = threadPool.submit(new Callable<NodeDataPair>() {
+	public static Gson gson = new Gson();
+	
+	private Future<String> run(String key, Class<?> class_) {
+		
+		Future<String> future = threadPool.submit(new Callable<String>() {
 			
 			@Override
-			public NodeDataPair call() throws Exception {
+			public String call() throws Exception {
 				log.info("found: "+nodes.size()+" records");
-				final String json = new ApiRequest().dhtPing(nodeData).serialize();
-				final ApiNodesResponse nodesReponse = (ApiNodesResponse)apiRequest(json, class_);
-				if(nodesReponse==null) {
+				final String json = new ApiRequest().getDHT(key).serialize();
+				Object object = apiRequest(json, class_);
+				if(object==null) {
 					return null;
 				}
-				if(nodesReponse.getResponse()==null) {
-					Gson gson = new Gson();
-					log.info("incorrect response: "+gson.toJson(nodesReponse));
-					return null;
+				ApiPeersResponse peerReponse = (ApiPeersResponse)object;
+				
+				if(peerReponse.getResponse().entrySet().isEmpty()) {
+					
+					log.info("incorrect response: "+gson.toJson(peerReponse));
+					return gson.toJson(peerReponse);
 				}
-				if(nodesReponse.getResponse().getNodes()==null) {
-					Gson gson = new Gson();
-					log.info("incorrect response: "+gson.toJson(nodesReponse));
-					return null;
+				Iterator<Entry<String, Map<String, List<String>>>> it = peerReponse.getResponse().entrySet().iterator();
+				Entry<String, Map<String, List<String>>> peer = it.next();
+				if(peer.getKey().equals("error")) {
+					return gson.toJson(peerReponse);
 				}
-				final Map<String, NodeData> nodes = nodesReponse.getResponse().getNodes();
-				for(final Entry<String, NodeData> nodeEntry:nodes.entrySet()) {
+				NodeDataPair ndp = new NodeDataPair(peer.getKey(), key);
+				ndp.setId(id++);
+				nodes.put(key, ndp);
+				List<String> keys = peer.getValue().get("keys");
+				for(String k:keys) {
+					links.add(new Link(k, peer.getKey()));
+					System.out.println("Total links:"+links.size());
 					//duplicated values are checked by Set
-					if(NetworkDHTCrawler.nodes.contains(new NodeDataPair(nodeEntry.getKey(), nodeEntry.getValue()))) {
+					if(NetworkDHTCrawler.nodes.get(k)!=null) {
 						continue;
 					}
-					NetworkDHTCrawler.nodes.add(new NodeDataPair(nodeEntry.getKey(), nodeEntry.getValue()));
-					queue.add(NetworkDHTCrawler.this.run(nodeEntry.getValue(), ApiNodesResponse.class));
+
+					NetworkDHTCrawler.this.run(k, class_).get(100l, TimeUnit.SECONDS);
 				}
-				return null;
+				return gson.toJson(peerReponse);
 			}    
 		});
 		
-		queue.add(future);
 		return future;
 	}
 	
-	private Object apiRequest(String json, Class<?> class_) {
+	private Object apiRequest(String json, Type peers) {
 		
 		String response = null;
 		byte[] cbuf = new byte[1024];
@@ -117,10 +132,11 @@ public class NetworkDHTCrawler {
 		Gson gson = new Gson();
 		Object apiReponse = null;
 		try {
-			apiReponse = gson.fromJson(response, class_);
+			apiReponse = gson.fromJson(response, peers);
 		} catch(JsonSyntaxException e) {
 			e.printStackTrace();
-			System.out.println(response);
+			System.err.println("error response:\n"+response);
+			return null;
 		}
 		if(apiReponse==null) {
 			System.out.println("No response received");
@@ -129,44 +145,57 @@ public class NetworkDHTCrawler {
 	}
 	
 	public static void run(String dataPath) throws InterruptedException, ExecutionException, IOException, ClassNotFoundException {
+		id = 0;
+		threadPool = Executors.newFixedThreadPool(20);
+		nodes = new ConcurrentHashMap<String, NodeDataPair>();
+		links = new HashSet<Link>();
 		
-		threadPool = Executors.newFixedThreadPool(30);
-		queue = new ConcurrentLinkedQueue<Future<NodeDataPair>>();
-		nodes = new HashSet<NodeDataPair>();
-		
-		String json = new ApiRequest().getDHT().serialize();
+		String json = new ApiRequest().getDHT("2506485f72886a6729ffa4bdaf270a8801b283d30aed4ea1f14518e5e8f7e9f6").serialize();
 		NetworkDHTCrawler crawler = new NetworkDHTCrawler();
-		ApiDHTResponse dhtReponse = (ApiDHTResponse)crawler.apiRequest(json, ApiDHTResponse.class);
-		if(dhtReponse==null) {
+		
+		ApiPeersResponse peerReponse = (ApiPeersResponse) crawler.apiRequest(json, ApiPeersResponse.class);
+		if(peerReponse==null || peerReponse.getResponse().isEmpty()) {
 			return;
 		}
-		//String json = new ApiRequest().dhtPing("5db525ea8fa6d3f20b5bb3d6d810f047ca447987e177532f78ed01713f459414", "[1 13]").serialize();
-		Map<String, NodeData> localDHT = dhtReponse.getResponse().getDht();
-		
-		for(Entry<String, NodeData> dhtEntry:localDHT.entrySet()) {
-			nodes.add(new NodeDataPair(dhtEntry.getKey(), dhtEntry.getValue()));
-			crawler.run(dhtEntry.getValue(), ApiNodesResponse.class);
+		Entry<String, Map<String, List<String>>> keys = peerReponse.getResponse().entrySet().iterator().next();
+		List<String> k = keys.getValue().get("keys");
+		if(k==null) {
+			return;
 		}
-		for(Future<NodeDataPair> item:queue) {
+		Iterator<String> keyIt = k.iterator();
+		while(keyIt.hasNext()) {
+			String key = keyIt.next();
+			NodeDataPair ndp = new NodeDataPair(keys.getKey(), key);
+			ndp.setId(id++);
+			nodes.put(key, ndp);
+
 			try {
-				item.get();
-			} catch (IllegalArgumentException e) {
-				e.printStackTrace();
+				crawler.run(key, ApiPeersResponse.class).get(1200l, TimeUnit.SECONDS);
+			} catch (InterruptedException e1) {
+				e1.printStackTrace();
+			} catch (ExecutionException e1) {
+				e1.printStackTrace();
+			} catch (TimeoutException e1) {
+				e1.printStackTrace();
 			}
 		}
-		long id = 1;
-		for(NodeDataPair ndp:NetworkDHTCrawler.nodes) {
-			ndp.setId(id);
-			id++;
-		}
+		/*history part
+		long timestamp = new Date().getTime();
+		new File(dataPath, "nodes.json").renameTo(new File(MAP_HISTORY_PATH, "nodes-"+timestamp+".json"));
 		try (Writer writer = new FileWriter(new File(dataPath, "nodes.json"))) {
 		    Gson gson = new GsonBuilder().setPrettyPrinting().create();
 		    gson.toJson(nodes, writer);
 		}
+		new File(dataPath, "links.json").renameTo(new File(MAP_HISTORY_PATH, "links-"+timestamp+".json"));
+		try (Writer writer = new FileWriter(new File(dataPath, "links.json"))) {
+		    Gson gson = new GsonBuilder().setPrettyPrinting().create();
+		    gson.toJson(links, writer);
+		}*/
 		System.out.println("done");
 		threadPool.shutdownNow();
 		try {
-			NodeData2JSGraphConverter.createJs(NetworkDHTCrawler.nodes, dataPath);
+			System.out.println("Nodes:"+nodes.size()+" Links:"+links.size());
+			NodeData2JSGraphConverter.createJs(nodes, links, dataPath);
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
@@ -174,6 +203,6 @@ public class NetworkDHTCrawler {
 	}
 	
 	public static void main(String args[]) throws InterruptedException, ExecutionException, IOException, ClassNotFoundException {
-		run("");
+		run(".");
 	}
 }

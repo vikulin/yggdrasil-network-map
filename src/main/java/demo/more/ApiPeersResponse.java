@@ -3,7 +3,7 @@ package demo.more;
 import java.util.List;
 import java.util.Map;
 
-public class ApiDHTResponse {
+public class ApiPeersResponse {
 	
 	private String status;
 	
