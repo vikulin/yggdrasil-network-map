@@ -20,13 +20,10 @@ import org.graphstream.graph.Edge;
 import org.graphstream.graph.EdgeRejectedException;
 import org.graphstream.graph.Graph;
 import org.graphstream.graph.Node;
-import org.graphstream.graph.NodeFactory;
 import org.graphstream.graph.implementations.SingleGraph;
 import org.graphstream.ui.graphicGraph.GraphPosLengthUtils;
 import org.graphstream.ui.layout.Layout;
 import org.graphstream.ui.layout.springbox.implementations.SpringBox;
-
-import com.google.gson.Gson;
 
 import demo.node.NodeDataPair;
 
@@ -44,11 +41,9 @@ public class NodeData2JSGraphConverter {
 		graph.setStrict(true);
 		layout.addAttributeSink(graph);
 		BetweennessCentrality bcb = new BetweennessCentrality();
-		NodeFactory<? extends Node> nf = graph.nodeFactory();
-		
 		for(Entry<String, NodeDataPair> nodeEntry:nodes.entrySet()) {
 			String nodeId = nodeEntry.getValue().getId()+"";
-			Node node = nf.newInstance(nodeId, graph);
+			Node node = graph.addNode(nodeId);
 			String ip = nodeEntry.getValue().getIp();
 			if(ip==null) {
 				System.err.println("ip is null for node:"+nodeId);
@@ -56,7 +51,6 @@ public class NodeData2JSGraphConverter {
 			}
 			node.setAttribute("ip", ip);
 			node.setAttribute("key", nodeEntry.getKey());
-			graph.addNode(nodeId);
 		}
 		for(Link l:links) {
 			String key = l.getKey();
@@ -97,7 +91,7 @@ public class NodeData2JSGraphConverter {
 		StringBuilder edgesSb = new StringBuilder();
 		String beginNodes = "var nodes = [\n";
 		String rowNodes = "{id: %s, label: \"%s\", title: \"%s\", value: %d, group: %d, x: %.2f, y: %.2f},\n";
-		String rowEdges = "{from: %s, to: %s, value: %d},\n";
+		String rowEdges = "{from: %s, to: %s, width: %.2f},\n";
 		String endNodes = "];\n";
 		String beginEdges = "var edges = [\n";
 		String endEdges = "];\n";
@@ -105,7 +99,7 @@ public class NodeData2JSGraphConverter {
 		String nodesNumber = "var nodesNumber = %d;\n";
 		String linksNumber = "var linksNumber = %d;";
 		nodesSb.append(beginNodes);
-		edgesSb.append(beginEdges);
+		
 		Iterator<Node> nodeIt = graph.iterator();
 		while(nodeIt.hasNext()) {
 			Node node = nodeIt.next();
@@ -120,21 +114,20 @@ public class NodeData2JSGraphConverter {
 			nodesSb.append(String.format(Locale.ROOT, rowNodes, node.getId(), label, ip, value, group, 100*coordinates[0], 100*coordinates[1]));
 		}
 		
-		int value = 1;
+		float width = 0.3f;
 		
-		int edgesCount = graph.getEdgeCount();
-		for(int index = 0; index < edgesCount; edgesCount++) {
-			Edge edge = graph.getEdge(index);
-			edgesSb.append(String.format(rowEdges, edge.getNode0().getId(), edge.getNode1().getId(), value));
-		}
-
-		System.out.println(new Gson().toJson(nodes));
-		nodesSb.append(endNodes);
-		edgesSb.append(endEdges);
+		int edgesCount = graph.getEdgeCount();	
 		
 		try (Writer writer = new FileWriter(new File(dataPath,"graph-data.js"))) {
+			writer.append(beginEdges);
+			for(int index = 0; index < edgesCount; index++) {
+				Edge edge = graph.getEdge(index);
+				writer.append(String.format(rowEdges, edge.getNode0().getId(), edge.getNode1().getId(), width));
+			}
+			writer.append(endEdges);
 			writer.append(nodesSb.toString());
-			writer.append(edgesSb.toString());
+			writer.append(endNodes);
+			
 			writer.append(String.format(generated, new Date().getTime()));
 			writer.append(String.format(nodesNumber, graph.getNodeCount()));
 			writer.append(String.format(linksNumber, graph.getEdgeCount()));

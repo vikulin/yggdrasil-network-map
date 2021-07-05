@@ -39,7 +39,7 @@ public class NetworkDHTCrawler {
 	
 	private static final Logger log = LoggerFactory.getLogger(NetworkDHTCrawler.class);
 	
-	private static final String ADMIN_API_HOST="192.168.1.108";
+	private static final String ADMIN_API_HOST="192.168.1.106";
 	
 	private static final int ADMIN_API_PORT=9001;
 	

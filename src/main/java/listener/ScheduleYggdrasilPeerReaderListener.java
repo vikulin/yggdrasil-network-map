@@ -109,7 +109,7 @@ public class ScheduleYggdrasilPeerReaderListener implements ServletContextListen
 	 			 }
 	 		 }
 		};
-		ses.scheduleAtFixedRate(task2, 5, 300, TimeUnit.SECONDS);
+		ses.scheduleAtFixedRate(task2, 5, 600, TimeUnit.SECONDS);
 		arg0.getServletContext().setAttribute ("timer", ses);
 	}
 
