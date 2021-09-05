@@ -122,7 +122,7 @@ public class NodeData2JSGraphConverter {
 			writer.append(beginEdges);
 			for(int index = 0; index < edgesCount; index++) {
 				Edge edge = graph.getEdge(index);
-				writer.append(String.format(rowEdges, edge.getNode0().getId(), edge.getNode1().getId(), width));
+				writer.append(String.format(Locale.ROOT, rowEdges, edge.getNode0().getId(), edge.getNode1().getId(), width));
 			}
 			writer.append(endEdges);
 			writer.append(nodesSb.toString());

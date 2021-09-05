@@ -1,12 +1,14 @@
 package demo.more;
 
 import java.io.DataOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
+
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -31,11 +33,12 @@ import demo.node.NodeDataPair;
 
 public class NetworkDHTCrawler {
 
-	private static final String MAP_HISTORY_PATH = "/opt/tomcat/yggdrasil-map-history";
-
+	//private static final String MAP_HISTORY_PATH = "/opt/tomcat/yggdrasil-map-history";
+	private static final String MAP_HISTORY_PATH = "C:\\Users\\Vadym\\git\\yggdrasil-network-map";
+	
 	private static final Logger log = LoggerFactory.getLogger(NetworkDHTCrawler.class);
 
-	private static final String ADMIN_API_HOST = "172.16.0.112";
+	private static final String ADMIN_API_HOST = "192.168.1.104";
 
 	private static final int ADMIN_API_PORT = 9001;
 
@@ -112,15 +115,13 @@ public class NetworkDHTCrawler {
 					clientSocket = new Socket(ADMIN_API_HOST, ADMIN_API_PORT);
 					os = new DataOutputStream(clientSocket.getOutputStream());
 					os.writeBytes(json);
-					System.out.println(json);
 					System.out.println("Total nodes:" + NetworkDHTCrawler.nodes.size());
 					int i = 0;
 					is = clientSocket.getInputStream();
-					while ((i = is.read(cbuf)) > 0) {
-						sb.append(new String(Arrays.copyOf(cbuf, i)));
-					}
+					i = is.read(cbuf);
+					sb.append(new String(Arrays.copyOf(cbuf, i)));
 					response = sb.toString();
-					System.out.println(response);
+					System.out.println("Request:\n"+json+"\n"+"Response:\n"+response);
 				} catch (java.net.SocketException e) {
 					e.printStackTrace();
 					return null;
@@ -161,7 +162,7 @@ public class NetworkDHTCrawler {
 		nodes = new ConcurrentHashMap<String, NodeDataPair>();
 		links = new HashSet<Link>();
 
-		String json = new ApiRequest().getPeers("2506485f72886a6729ffa4bdaf270a8801b283d30aed4ea1f14518e5e8f7e9f6")
+		String json = new ApiRequest().getPeers("323e321939b1b08e06b89b0ed8c57b09757f2974eba218887fdd68a45024d4c1")
 				.serialize();
 		NetworkDHTCrawler crawler = new NetworkDHTCrawler();
 		Future<Object> o = threadTaskPool.submit(crawler.apiRequest(json, ApiPeersResponse.class));
@@ -214,6 +215,7 @@ public class NetworkDHTCrawler {
 
 	public static void main(String args[])
 			throws InterruptedException, ExecutionException, IOException, ClassNotFoundException {
+		System.out.println(new File(".").toPath());
 		run(".");
 	}
 }

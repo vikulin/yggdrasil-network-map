@@ -7,17 +7,19 @@ import com.google.gson.Gson;
 
 public class ApiRequest {
 	
-	private Map<String, String> map = new TreeMap<String, String>();
+	private Map<String, Object> map = new TreeMap<String, Object>();
 	
 	public ApiRequest getPeers(String key){
 		map.put("request", "debug_remotegetpeers");
 		map.put("key", key);
+		map.put("keepalive", true);
 		return this;
 	}
 	
 	public ApiRequest getDHT(String key){
 		map.put("request", "debug_remotegetdht");
 		map.put("key", key);
+		map.put("keepalive", true);
 		return this;
 	}
 	
