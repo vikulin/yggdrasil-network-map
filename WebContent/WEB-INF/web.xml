@@ -3,7 +3,7 @@
 	xmlns="http://xmlns.jcp.org/xml/ns/javaee"
 	xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd"
 	id="WebApp_ID" version="3.1">
-	<display-name>yggdrasil-network-map</display-name>
+	<display-name>riv-mesh-network-map</display-name>
 	<listener>
 		<description>
   	Used to cleanup when a session is destroyed</description>
