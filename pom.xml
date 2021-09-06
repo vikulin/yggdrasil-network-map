@@ -146,7 +146,7 @@
 	</dependencies>
 
 	<build>
-		<finalName>yggdrasil-network-map</finalName>
+		<finalName>ROOT</finalName>
 		<plugins>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
