@@ -16,6 +16,13 @@ public class ApiRequest {
 		return this;
 	}
 	
+	public ApiRequest getNodeInfo(String key){
+		map.put("request", "getnodeinfo");
+		map.put("key", key);
+		map.put("keepalive", true);
+		return this;
+	}
+	
 	public ApiRequest getDHT(String key){
 		map.put("request", "debug_remotegetdht");
 		map.put("key", key);

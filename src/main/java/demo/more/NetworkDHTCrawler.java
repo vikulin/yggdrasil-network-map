@@ -47,7 +47,6 @@ public class NetworkDHTCrawler {
 	private static ExecutorService threadTaskPool;
 	public volatile static Map<String, NodeDataPair> nodes; // node key, ip nodes
 	public volatile static Set<Link> links; // node key, ip links
-	//public volatile static long id = 0;
 
 	public static Gson gson = new Gson();
 
@@ -78,7 +77,28 @@ public class NetworkDHTCrawler {
 					return gson.toJson(peerReponse);
 				}
 				NodeDataPair ndp = new NodeDataPair(peer.getKey(), key);
-				//ndp.setId(id++);
+				
+				String nodeInfo = new ApiRequest().getNodeInfo(key).serialize();
+				Future<Object> nodeInfoO = threadTaskPool.submit(apiRequest(nodeInfo, ApiNodeInfoResponse.class));
+				Object nodeInfoObject = nodeInfoO.get();
+				ApiNodeInfoResponse nodeInfoReponse = (ApiNodeInfoResponse) nodeInfoObject;
+				if (nodeInfoReponse != null && !nodeInfoReponse.getResponse().isEmpty()) {
+					
+					Entry<String, Map<String, String>> keysNodeInfo = nodeInfoReponse.getResponse().entrySet().iterator().next();
+					String buildarch = keysNodeInfo.getValue().get("buildarch");
+					String buildplatform = keysNodeInfo.getValue().get("buildplatform");
+					String buildversion = keysNodeInfo.getValue().get("buildversion");
+					if (buildarch != null) {
+						ndp.setArch(buildarch);
+					}
+					if (buildplatform != null) {
+						ndp.setPlatform(buildplatform);
+					}
+					if (buildversion != null) {
+						ndp.setVersion(buildversion);
+					}
+				}
+				
 				nodes.put(key, ndp);
 				List<String> keys = peer.getValue().get("keys");
 				for (String k : keys) {
@@ -163,8 +183,7 @@ public class NetworkDHTCrawler {
 		nodes = new TreeMap<String, NodeDataPair>();
 		links = new TreeSet<Link>();
 
-		String json = new ApiRequest().getPeers("323e321939b1b08e06b89b0ed8c57b09757f2974eba218887fdd68a45024d4c1")
-				.serialize();
+		String json = new ApiRequest().getPeers("323e321939b1b08e06b89b0ed8c57b09757f2974eba218887fdd68a45024d4c1").serialize();
 		NetworkDHTCrawler crawler = new NetworkDHTCrawler();
 		Future<Object> o = threadTaskPool.submit(crawler.apiRequest(json, ApiPeersResponse.class));
 		Object object = o.get();
@@ -179,10 +198,30 @@ public class NetworkDHTCrawler {
 		}
 		Iterator<String> keyIt = k.iterator();
 		List<Future<String>> f = new ArrayList<Future<String>>();
+		String nodeInfo = new ApiRequest().getNodeInfo("323e321939b1b08e06b89b0ed8c57b09757f2974eba218887fdd68a45024d4c1").serialize();
+		Future<Object> nodeInfoO = threadTaskPool.submit(crawler.apiRequest(nodeInfo, ApiNodeInfoResponse.class));
+		Object nodeInfoObject = nodeInfoO.get();
 		while (keyIt.hasNext()) {
 			String key = keyIt.next();
 			NodeDataPair ndp = new NodeDataPair(keys.getKey(), key);
-			//ndp.setId(id++);
+			ApiNodeInfoResponse nodeInfoReponse = (ApiNodeInfoResponse) nodeInfoObject;
+			if (nodeInfoReponse != null && !nodeInfoReponse.getResponse().isEmpty()) {
+				
+				Entry<String, Map<String, String>> keysNodeInfo = nodeInfoReponse.getResponse().entrySet().iterator().next();
+				String buildarch = keysNodeInfo.getValue().get("buildarch");
+				String buildplatform = keysNodeInfo.getValue().get("buildplatform");
+				String buildversion = keysNodeInfo.getValue().get("buildversion");
+				if (buildarch != null) {
+					ndp.setArch(buildarch);
+				}
+				if (buildplatform != null) {
+					ndp.setPlatform(buildplatform);
+				}
+				if (buildversion != null) {
+					ndp.setVersion(buildversion);
+				}
+			}
+			
 			nodes.put(key, ndp);
 
 			Future<String> future = crawler.run(key, ApiPeersResponse.class);

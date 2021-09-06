@@ -54,6 +54,9 @@ public class NodeData2JSGraphConverter {
 			}
 			node.setAttribute("ip", ip);
 			node.setAttribute("key", nodeEntry.getKey());
+			node.setAttribute("os", nodeEntry.getValue().getPlatform());
+			node.setAttribute("arch", nodeEntry.getValue().getArch());
+			node.setAttribute("version", nodeEntry.getValue().getVersion());
 		}
 		for(Link l:links) {
 			String key = l.getKey();
@@ -104,6 +107,11 @@ public class NodeData2JSGraphConverter {
 		    layout.compute();
 		}
 
+		String preTitle = "function preTitle(text) {\r\n"
+				+ "		  const container = document.createElement(\"pre\");\r\n"
+				+ "		  container.innerText = text;\r\n"
+				+ "		  return container;\r\n"
+				+ "		};\n";
 		String beginNodes = "var nodes = [\n";
 		String rowNodes = "{id: %s, label: \"%s\", title: \"%s\", value: %d, group: %d, x: %.2f, y: %.2f},\n";
 		String rowEdges = "{from: %s, to: %s, width: %.2f},\n";
@@ -116,6 +124,7 @@ public class NodeData2JSGraphConverter {
 		float width = 0.7f;
 		int edgesCount = graph.getEdgeCount();	
 		try (Writer writer = new FileWriter(new File(dataPath,"graph-data.js"))) {
+			//writer.append(preTitle);
 			writer.append(beginEdges);
 			for(int index = 0; index < edgesCount; index++) {
 				Edge edge = graph.getEdge(index);
@@ -133,11 +142,25 @@ public class NodeData2JSGraphConverter {
 				if(ip==null) {
 					ip=":";
 				}
+				Object os = node.getAttribute("os");
+				if(os==null) {
+					os="";
+				}
+				Object arch = node.getAttribute("arch");
+				if(arch==null) {
+					arch="";
+				}
+				Object version = node.getAttribute("version");
+				if(version==null) {
+					version="";
+				}
 				String label = ip.toString().substring(ip.toString().lastIndexOf(':') + 1);
 				long value = Double.valueOf(node.getAttribute("Cb").toString()).longValue()+5;
 				long group = value;
 				double[] coordinates = GraphPosLengthUtils.nodePosition(graph, node.getId());
-				writer.append(String.format(Locale.ROOT, rowNodes, node.getId(), label, ip, value, group, 100*coordinates[0], 100*coordinates[1]));
+				//String title = ip+"\\n"+os+" "+arch+" "+version;
+				String title = ip.toString();
+				writer.append(String.format(Locale.ROOT, rowNodes, node.getId(), label, title, value, group, 100*coordinates[0], 100*coordinates[1]));
 			}
 			writer.append(endNodes);
 			writer.append(String.format(generated, new Date().getTime()));
