@@ -35,7 +35,7 @@ public class NodeData2JSGraphConverter {
 	
 	public static void createJs(Map<String, NodeDataPair> nodes, Set<Link> links, String dataPath) throws IOException, ClassNotFoundException {
 		
-		Graph graph = new SingleGraph("Yggdrasil network");
+		Graph graph = new SingleGraph("RiV-mesh network");
 		Layout layout = new SpringBox(false);
 		graph.addSink(layout);
 		graph.setStrict(true);
@@ -86,9 +86,7 @@ public class NodeData2JSGraphConverter {
 		while(layout.getStabilization() < 0.92){
 		    layout.compute();
 		}
-		  
-		StringBuilder nodesSb = new StringBuilder();
-		StringBuilder edgesSb = new StringBuilder();
+
 		String beginNodes = "var nodes = [\n";
 		String rowNodes = "{id: %s, label: \"%s\", title: \"%s\", value: %d, group: %d, x: %.2f, y: %.2f},\n";
 		String rowEdges = "{from: %s, to: %s, width: %.2f},\n";
@@ -98,36 +96,33 @@ public class NodeData2JSGraphConverter {
 		String generated = "var generated = %d;\n";
 		String nodesNumber = "var nodesNumber = %d;\n";
 		String linksNumber = "var linksNumber = %d;";
-		nodesSb.append(beginNodes);
-		
-		Iterator<Node> nodeIt = graph.iterator();
-		while(nodeIt.hasNext()) {
-			Node node = nodeIt.next();
-			Object ip = node.getAttribute("ip");
-			if(ip==null) {
-				ip=":";
-			}
-			String label = ip.toString().substring(ip.toString().lastIndexOf(':') + 1);
-			long value = Double.valueOf(node.getAttribute("Cb").toString()).longValue()+5;
-			long group = value;
-			double[] coordinates = GraphPosLengthUtils.nodePosition(graph, node.getId());
-			nodesSb.append(String.format(Locale.ROOT, rowNodes, node.getId(), label, ip, value, group, 100*coordinates[0], 100*coordinates[1]));
-		}
-		
-		float width = 0.3f;
-		
+		float width = 0.7f;
 		int edgesCount = graph.getEdgeCount();	
-		
 		try (Writer writer = new FileWriter(new File(dataPath,"graph-data.js"))) {
 			writer.append(beginEdges);
 			for(int index = 0; index < edgesCount; index++) {
 				Edge edge = graph.getEdge(index);
-				writer.append(String.format(Locale.ROOT, rowEdges, edge.getNode0().getId(), edge.getNode1().getId(), width));
+				String edgeString = String.format(Locale.ROOT, rowEdges, edge.getNode0().getId(), edge.getNode1().getId(), width);
+				System.out.println(edgeString);
+				writer.append(edgeString);
 			}
-			writer.append(endEdges);
-			writer.append(nodesSb.toString());
-			writer.append(endNodes);
 			
+			writer.append(endEdges);
+			writer.append(beginNodes);
+			Iterator<Node> nodeIt = graph.iterator();
+			while(nodeIt.hasNext()) {
+				Node node = nodeIt.next();
+				Object ip = node.getAttribute("ip");
+				if(ip==null) {
+					ip=":";
+				}
+				String label = ip.toString().substring(ip.toString().lastIndexOf(':') + 1);
+				long value = Double.valueOf(node.getAttribute("Cb").toString()).longValue()+5;
+				long group = value;
+				double[] coordinates = GraphPosLengthUtils.nodePosition(graph, node.getId());
+				writer.append(String.format(Locale.ROOT, rowNodes, node.getId(), label, ip, value, group, 100*coordinates[0], 100*coordinates[1]));
+			}
+			writer.append(endNodes);
 			writer.append(String.format(generated, new Date().getTime()));
 			writer.append(String.format(nodesNumber, graph.getNodeCount()));
 			writer.append(String.format(linksNumber, graph.getEdgeCount()));

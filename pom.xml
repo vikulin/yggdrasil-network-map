@@ -8,7 +8,7 @@
 	<packaging>war</packaging>
 
 	<properties>
-		<zk-version>9.5.0.2-Eval</zk-version>
+		<zk-version>9.6.0.1-Eval</zk-version>
 	</properties>
 
 	<repositories>
