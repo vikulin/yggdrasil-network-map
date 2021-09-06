@@ -12,6 +12,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -36,7 +37,7 @@ public class NodeData2JSGraphConverter {
 	public static void createJs(Map<String, NodeDataPair> nodes, Set<Link> links, String dataPath) throws IOException, ClassNotFoundException {
 		
 		Graph graph = new SingleGraph("RiV-mesh network");
-		Layout layout = new SpringBox(false);
+		Layout layout = new SpringBox(true, new Random(100001));
 		graph.addSink(layout);
 		graph.setStrict(true);
 		layout.addAttributeSink(graph);
@@ -101,11 +102,13 @@ public class NodeData2JSGraphConverter {
 		System.out.println("edgesCount:"+graph.getEdgeCount());
 		bcb.init(graph);
 		bcb.compute();
-		
+		layout.setQuality(0.99d);
+
 		// iterate the compute() method a number of times
-		while(layout.getStabilization() < 0.92){
+		while(layout.getStabilization() < 0.93){
 		    layout.compute();
 		}
+		
 
 		String preTitle = "function preTitle(text) {\r\n"
 				+ "		  const container = document.createElement(\"pre\");\r\n"
