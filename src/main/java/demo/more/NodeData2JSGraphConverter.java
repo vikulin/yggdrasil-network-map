@@ -71,13 +71,27 @@ public class NodeData2JSGraphConverter {
 				//skip self links
 				continue;
 			}
-			String edgeId = ndp.getId()+"-"+toId;
-			System.out.println("added adge:"+edgeId);
-			try {
+			if(ndp.getId()<toId) {
+				String edgeId = ndp.getId()+"-"+toId;
+				if(graph.getEdge(edgeId)!=null) {
+					continue;
+				}
+				graph.addEdge(edgeId , ndp.getId()+"", toId+"");
+				System.out.println("added adge:"+edgeId);
+			} else {
+				String reversedEdgeId = toId+"-"+ndp.getId();
+				if(graph.getEdge(reversedEdgeId)!=null) {
+					continue;
+				}
+				graph.addEdge(reversedEdgeId , toId+"", ndp.getId()+"");
+				System.out.println("added adge:"+reversedEdgeId);
+			}
+			
+			/*try {
 				graph.addEdge(edgeId , ndp.getId()+"", toId+"");
 			} catch (EdgeRejectedException e1) {
 				System.err.println("an existing edge");
-			}
+			}*/
 		}
 		int nodesCount = graph.getNodeCount();
 		System.out.println("nodesCount:"+nodesCount);
