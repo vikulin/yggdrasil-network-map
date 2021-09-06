@@ -15,8 +15,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -33,8 +33,8 @@ import demo.node.NodeDataPair;
 
 public class NetworkDHTCrawler {
 
-	//private static final String MAP_HISTORY_PATH = "/opt/tomcat/yggdrasil-map-history";
-	private static final String MAP_HISTORY_PATH = "C:\\Users\\Vadym\\git\\yggdrasil-network-map";
+	private static final String MAP_HISTORY_PATH = "/opt/tomcat/yggdrasil-map-history";
+	//private static final String MAP_HISTORY_PATH = "C:\\Users\\Vadym\\git\\yggdrasil-network-map";
 	
 	private static final Logger log = LoggerFactory.getLogger(NetworkDHTCrawler.class);
 
@@ -46,7 +46,7 @@ public class NetworkDHTCrawler {
 	private static ExecutorService threadTaskPool;
 	public volatile static Map<String, NodeDataPair> nodes; // node key, ip nodes
 	public volatile static Set<Link> links; // node key, ip links
-	public volatile static long id = 0;
+	//public volatile static long id = 0;
 
 	public static Gson gson = new Gson();
 
@@ -77,7 +77,7 @@ public class NetworkDHTCrawler {
 					return gson.toJson(peerReponse);
 				}
 				NodeDataPair ndp = new NodeDataPair(peer.getKey(), key);
-				ndp.setId(id++);
+				//ndp.setId(id++);
 				nodes.put(key, ndp);
 				List<String> keys = peer.getValue().get("keys");
 				for (String k : keys) {
@@ -156,10 +156,10 @@ public class NetworkDHTCrawler {
 
 	public static void run(String dataPath)
 			throws InterruptedException, ExecutionException, IOException, ClassNotFoundException {
-		id = 0;
+		//id = 0;
 		threadPool = Executors.newFixedThreadPool(10);
 		threadTaskPool = Executors.newFixedThreadPool(10);
-		nodes = new ConcurrentHashMap<String, NodeDataPair>();
+		nodes = new TreeMap<String, NodeDataPair>();
 		links = new HashSet<Link>();
 
 		String json = new ApiRequest().getPeers("323e321939b1b08e06b89b0ed8c57b09757f2974eba218887fdd68a45024d4c1")
@@ -181,7 +181,7 @@ public class NetworkDHTCrawler {
 		while (keyIt.hasNext()) {
 			String key = keyIt.next();
 			NodeDataPair ndp = new NodeDataPair(keys.getKey(), key);
-			ndp.setId(id++);
+			//ndp.setId(id++);
 			nodes.put(key, ndp);
 
 			Future<String> future = crawler.run(key, ApiPeersResponse.class);

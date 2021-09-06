@@ -41,8 +41,11 @@ public class NodeData2JSGraphConverter {
 		graph.setStrict(true);
 		layout.addAttributeSink(graph);
 		BetweennessCentrality bcb = new BetweennessCentrality();
+		long id=0;
 		for(Entry<String, NodeDataPair> nodeEntry:nodes.entrySet()) {
-			String nodeId = nodeEntry.getValue().getId()+"";
+			id++;
+			nodeEntry.getValue().setId(id);
+			String nodeId = id+"";
 			Node node = graph.addNode(nodeId);
 			String ip = nodeEntry.getValue().getIp();
 			if(ip==null) {
