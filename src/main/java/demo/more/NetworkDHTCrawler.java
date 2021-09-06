@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -160,7 +161,7 @@ public class NetworkDHTCrawler {
 		threadPool = Executors.newFixedThreadPool(10);
 		threadTaskPool = Executors.newFixedThreadPool(10);
 		nodes = new TreeMap<String, NodeDataPair>();
-		links = new HashSet<Link>();
+		links = new TreeSet<Link>();
 
 		String json = new ApiRequest().getPeers("323e321939b1b08e06b89b0ed8c57b09757f2974eba218887fdd68a45024d4c1")
 				.serialize();
