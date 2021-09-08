@@ -23,8 +23,8 @@ public class Link implements Comparable<Link> {
 		return keyTo;
 	}
 
-	public void setKeyTo(String ip) {
-		this.keyTo = ip;
+	public void setKeyTo(String key) {
+		this.keyTo = key;
 	}
 	
 	@Override
