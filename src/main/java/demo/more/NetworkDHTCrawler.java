@@ -9,7 +9,6 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +39,8 @@ public class NetworkDHTCrawler {
 	private static final Logger log = LoggerFactory.getLogger(NetworkDHTCrawler.class);
 
 	private static final String ADMIN_API_HOST = "192.168.1.104";
+	
+	private static final String KEY_API_HOST = "323e321939b1b08e06b89b0ed8c57b09757f2974eba218887fdd68a45024d4c1";
 
 	private static final int ADMIN_API_PORT = 9001;
 
@@ -106,7 +107,7 @@ public class NetworkDHTCrawler {
 				nodes.put(key, ndp);
 				List<String> keys = peer.getValue().get("keys");
 				for (String k : keys) {
-					links.add(new Link(k, peer.getKey()));
+					links.add(new Link(k, key));
 					// duplicated values are checked by Set
 					if (NetworkDHTCrawler.nodes.get(k) != null) {
 						continue;
@@ -187,7 +188,7 @@ public class NetworkDHTCrawler {
 		nodes = new TreeMap<String, NodeDataPair>();
 		links = new TreeSet<Link>();
 
-		String json = new ApiRequest().getPeers("323e321939b1b08e06b89b0ed8c57b09757f2974eba218887fdd68a45024d4c1").serialize();
+		String json = new ApiRequest().getPeers(KEY_API_HOST).serialize();
 		NetworkDHTCrawler crawler = new NetworkDHTCrawler();
 		Future<Object> o = threadTaskPool.submit(crawler.apiRequest(json, ApiPeersResponse.class));
 		Object object = o.get();
@@ -202,7 +203,7 @@ public class NetworkDHTCrawler {
 		}
 		Iterator<String> keyIt = k.iterator();
 		List<Future<String>> f = new ArrayList<Future<String>>();
-		String nodeInfo = new ApiRequest().getNodeInfo("323e321939b1b08e06b89b0ed8c57b09757f2974eba218887fdd68a45024d4c1").serialize();
+		String nodeInfo = new ApiRequest().getNodeInfo(KEY_API_HOST).serialize();
 		Future<Object> nodeInfoO = threadTaskPool.submit(crawler.apiRequest(nodeInfo, ApiNodeInfoResponse.class));
 		Object nodeInfoObject = nodeInfoO.get();
 		while (keyIt.hasNext()) {
@@ -231,7 +232,7 @@ public class NetworkDHTCrawler {
 			}
 			
 			nodes.put(key, ndp);
-
+			links.add(new Link(KEY_API_HOST, key));
 			Future<String> future = crawler.run(key, ApiPeersResponse.class);
 			f.add(future);
 		}

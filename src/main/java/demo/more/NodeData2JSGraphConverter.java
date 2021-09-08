@@ -61,13 +61,13 @@ public class NodeData2JSGraphConverter {
 			node.setAttribute("name", nodeEntry.getValue().getName());
 		}
 		for(Link l:links) {
-			String key = l.getKey();
-			String ip = l.getIp();
+			String key = l.getKeyFrom();
+			String ip = l.getKeyTo();
 			NodeDataPair ndp = nodes.get(key);
 			if(ndp==null) {
 				continue;
 			}
-			Optional<Entry<String, NodeDataPair>> element = nodes.entrySet().stream().filter(n->n.getValue().getIp().equals(ip)).findFirst();
+			Optional<Entry<String, NodeDataPair>> element = nodes.entrySet().stream().filter(n->n.getValue().getKey().equals(ip)).findFirst();
 			if(element.isEmpty()) {
 				continue;
 			}
