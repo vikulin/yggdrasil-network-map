@@ -10,6 +10,8 @@ public class NodeDataPair {
 	private String version;
 	private String platform;
 	
+	private String name;
+	
 	public NodeDataPair(String ip, String key) {
 		this.ip = ip;
 		this.key = key;
@@ -61,6 +63,14 @@ public class NodeDataPair {
 
 	public void setPlatform(String platform) {
 		this.platform = platform;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
 	}
 
 	@Override

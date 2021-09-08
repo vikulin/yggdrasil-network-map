@@ -88,6 +88,7 @@ public class NetworkDHTCrawler {
 					String buildarch = keysNodeInfo.getValue().get("buildarch");
 					String buildplatform = keysNodeInfo.getValue().get("buildplatform");
 					String buildversion = keysNodeInfo.getValue().get("buildversion");
+					String name = keysNodeInfo.getValue().get("name");
 					if (buildarch != null) {
 						ndp.setArch(buildarch);
 					}
@@ -96,6 +97,9 @@ public class NetworkDHTCrawler {
 					}
 					if (buildversion != null) {
 						ndp.setVersion(buildversion);
+					}
+					if (name != null) {
+						ndp.setName(name);
 					}
 				}
 				
@@ -211,6 +215,7 @@ public class NetworkDHTCrawler {
 				String buildarch = keysNodeInfo.getValue().get("buildarch");
 				String buildplatform = keysNodeInfo.getValue().get("buildplatform");
 				String buildversion = keysNodeInfo.getValue().get("buildversion");
+				String name = keysNodeInfo.getValue().get("name");
 				if (buildarch != null) {
 					ndp.setArch(buildarch);
 				}
@@ -219,6 +224,9 @@ public class NetworkDHTCrawler {
 				}
 				if (buildversion != null) {
 					ndp.setVersion(buildversion);
+				}
+				if (name != null) {
+					ndp.setName(name);
 				}
 			}
 			

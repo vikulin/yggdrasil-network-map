@@ -58,6 +58,7 @@ public class NodeData2JSGraphConverter {
 			node.setAttribute("os", nodeEntry.getValue().getPlatform());
 			node.setAttribute("arch", nodeEntry.getValue().getArch());
 			node.setAttribute("version", nodeEntry.getValue().getVersion());
+			node.setAttribute("name", nodeEntry.getValue().getName());
 		}
 		for(Link l:links) {
 			String key = l.getKey();
@@ -157,13 +158,19 @@ public class NodeData2JSGraphConverter {
 				if(version==null) {
 					version="";
 				}
+				Object name = node.getAttribute("name");
+
 				String label = ip.toString().substring(ip.toString().lastIndexOf(':') + 1);
 				long value = Double.valueOf(node.getAttribute("Cb").toString()).longValue()+5;
 				long group = value;
 				double[] coordinates = GraphPosLengthUtils.nodePosition(graph, node.getId());
 				//String title = ip+"\\n"+os+" "+arch+" "+version;
 				String title = ip.toString();
-				writer.append(String.format(Locale.ROOT, rowNodes, node.getId(), label, title, value, group, 100*coordinates[0], 100*coordinates[1]));
+				if(name==null) {
+					writer.append(String.format(Locale.ROOT, rowNodes, node.getId(), label, title, value, group, 100*coordinates[0], 100*coordinates[1]));
+				} else {
+					writer.append(String.format(Locale.ROOT, rowNodes, node.getId(), name, title, value, group, 100*coordinates[0], 100*coordinates[1]));
+				}
 			}
 			writer.append(endNodes);
 			writer.append(String.format(generated, new Date().getTime()));
