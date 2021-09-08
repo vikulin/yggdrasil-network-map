@@ -13,10 +13,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.SortedMap;
+import java.util.SortedSet;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -46,22 +47,26 @@ public class NetworkDHTCrawler {
 
 	private static ExecutorService threadPool;
 	private static ExecutorService threadTaskPool;
-	public volatile static Map<String, NodeDataPair> nodes; // node key, ip nodes
-	public volatile static Set<Link> links; // node key, ip links
+	private static SortedMap<String, NodeDataPair> nodes; // node key, ip nodes
+	private static SortedSet<Link> links; // node key, ip links
 
 	public static Gson gson = new Gson();
 
-	private Future<String> run(String key, Class<?> class_) {
+	private Future<String> run(String targetNodeKey, Class<?> class_) {
 
 		Future<String> future = threadPool.submit(new Callable<String>() {
 
 			@Override
 			public String call() throws Exception {
 				log.info("found: " + nodes.size() + " records");
-
-				final String json = new ApiRequest().getPeers(key).serialize();
+				if (NetworkDHTCrawler.nodes.get(targetNodeKey) != null) {
+					return null;
+				} else {
+					nodes.put(targetNodeKey, new NodeDataPair(null, null));
+				}
+				final String json = new ApiRequest().getPeers(targetNodeKey).serialize();
 				Future<Object> o = threadTaskPool.submit(apiRequest(json, class_));
-				Object object = o.get(20000, TimeUnit.MILLISECONDS);
+				Object object = o.get(2000, TimeUnit.MILLISECONDS);
 				if (object == null) {
 					return null;
 				}
@@ -77,11 +82,11 @@ public class NetworkDHTCrawler {
 				if (peer.getKey().equals("error")) {
 					return gson.toJson(peerReponse);
 				}
-				NodeDataPair ndp = new NodeDataPair(peer.getKey(), key);
+				NodeDataPair ndp = new NodeDataPair(peer.getKey(), targetNodeKey);
 				
-				String nodeInfo = new ApiRequest().getNodeInfo(key).serialize();
+				String nodeInfo = new ApiRequest().getNodeInfo(targetNodeKey).serialize();
 				Future<Object> nodeInfoO = threadTaskPool.submit(apiRequest(nodeInfo, ApiNodeInfoResponse.class));
-				Object nodeInfoObject = nodeInfoO.get();
+				Object nodeInfoObject = nodeInfoO.get(2000, TimeUnit.MILLISECONDS);
 				ApiNodeInfoResponse nodeInfoReponse = (ApiNodeInfoResponse) nodeInfoObject;
 				if (nodeInfoReponse != null && !nodeInfoReponse.getResponse().isEmpty()) {
 					
@@ -104,17 +109,17 @@ public class NetworkDHTCrawler {
 					}
 				}
 				
-				nodes.put(key, ndp);
-				List<String> keys = peer.getValue().get("keys");
-				for (String k : keys) {
-					links.add(new Link(k, key));
+				nodes.put(targetNodeKey, ndp);
+				List<String> peerKeys = peer.getValue().get("keys");
+				for (String peerKey : peerKeys) {
+					links.add(new Link(peerKey, targetNodeKey));
 					// duplicated values are checked by Set
-					if (NetworkDHTCrawler.nodes.get(k) != null) {
+					if (NetworkDHTCrawler.nodes.get(peerKey) != null) {
 						continue;
 					}
 					System.out.println("Total links:" + links.size());
 					try {
-						NetworkDHTCrawler.this.run(k, class_).get(5000, TimeUnit.MILLISECONDS);
+						NetworkDHTCrawler.this.run(peerKey, class_).get();
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
@@ -182,64 +187,15 @@ public class NetworkDHTCrawler {
 
 	public static void run(String dataPath)
 			throws InterruptedException, ExecutionException, IOException, ClassNotFoundException {
-		//id = 0;
 		threadPool = Executors.newFixedThreadPool(10);
 		threadTaskPool = Executors.newFixedThreadPool(10);
-		nodes = new TreeMap<String, NodeDataPair>();
-		links = new TreeSet<Link>();
+		nodes = new ConcurrentSkipListMap<String, NodeDataPair>();
+		links = new ConcurrentSkipListSet<Link>();
 
-		String json = new ApiRequest().getPeers(KEY_API_HOST).serialize();
 		NetworkDHTCrawler crawler = new NetworkDHTCrawler();
-		Future<Object> o = threadTaskPool.submit(crawler.apiRequest(json, ApiPeersResponse.class));
-		Object object = o.get();
-		ApiPeersResponse peerReponse = (ApiPeersResponse) object;
-		if (peerReponse == null || peerReponse.getResponse().isEmpty()) {
-			return;
-		}
-		Entry<String, Map<String, List<String>>> keys = peerReponse.getResponse().entrySet().iterator().next();
-		List<String> k = keys.getValue().get("keys");
-		if (k == null) {
-			return;
-		}
-		Iterator<String> keyIt = k.iterator();
-		List<Future<String>> f = new ArrayList<Future<String>>();
-		String nodeInfo = new ApiRequest().getNodeInfo(KEY_API_HOST).serialize();
-		Future<Object> nodeInfoO = threadTaskPool.submit(crawler.apiRequest(nodeInfo, ApiNodeInfoResponse.class));
-		Object nodeInfoObject = nodeInfoO.get();
-		while (keyIt.hasNext()) {
-			String key = keyIt.next();
-			NodeDataPair ndp = new NodeDataPair(keys.getKey(), key);
-			ApiNodeInfoResponse nodeInfoReponse = (ApiNodeInfoResponse) nodeInfoObject;
-			if (nodeInfoReponse != null && !nodeInfoReponse.getResponse().isEmpty()) {
-				
-				Entry<String, Map<String, String>> keysNodeInfo = nodeInfoReponse.getResponse().entrySet().iterator().next();
-				String buildarch = keysNodeInfo.getValue().get("buildarch");
-				String buildplatform = keysNodeInfo.getValue().get("buildplatform");
-				String buildversion = keysNodeInfo.getValue().get("buildversion");
-				String name = keysNodeInfo.getValue().get("name");
-				if (buildarch != null) {
-					ndp.setArch(buildarch);
-				}
-				if (buildplatform != null) {
-					ndp.setPlatform(buildplatform);
-				}
-				if (buildversion != null) {
-					ndp.setVersion(buildversion);
-				}
-				if (name != null) {
-					ndp.setName(name);
-				}
-			}
-			
-			nodes.put(key, ndp);
-			links.add(new Link(KEY_API_HOST, key));
-			Future<String> future = crawler.run(key, ApiPeersResponse.class);
-			f.add(future);
-		}
 
-		for (Future<String> ft : f) {
-			ft.get();
-		}
+		Future<String> future = crawler.run(KEY_API_HOST, ApiPeersResponse.class);
+		future.get();
 		/*
 		 * history part long timestamp = new Date().getTime(); new File(dataPath,
 		 * "nodes.json").renameTo(new File(MAP_HISTORY_PATH,
