@@ -105,7 +105,10 @@ public class NetworkDHTCrawler {
 					return null;
 				}
 				if (nodeInfoReponse != null && !nodeInfoReponse.getResponse().isEmpty()) {
-					
+					if(nodeInfoReponse.getStatus().equals("error")){
+						System.out.println("error");
+						return null;
+					}
 					Entry<String, Map<String, String>> keysNodeInfo = nodeInfoReponse.getResponse().entrySet().iterator().next();
 					String buildarch = keysNodeInfo.getValue().get("buildarch");
 					String buildplatform = keysNodeInfo.getValue().get("buildplatform");
