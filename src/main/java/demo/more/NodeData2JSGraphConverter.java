@@ -67,7 +67,7 @@ public class NodeData2JSGraphConverter {
 			if(ndp==null) {
 				continue;
 			}
-			Optional<Entry<String, NodeDataPair>> element = nodes.entrySet().stream().filter(n->n.getValue().getKey().equals(keyTo)).findFirst();
+			Optional<Entry<String, NodeDataPair>> element = nodes.entrySet().stream().filter(n->(n.getValue().getKey()!=null && n.getValue().getKey().equals(keyTo))).findFirst();
 			if(element.isEmpty()) {
 				continue;
 			}

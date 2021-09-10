@@ -4,9 +4,7 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Type;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.Arrays;
 
 import java.util.Iterator;
@@ -52,7 +50,7 @@ public class NetworkDHTCrawler {
 
 	public static Gson gson = new Gson();
 
-	private Future<String> run(String targetNodeKey, Class<?> class_) {
+	private Future<String> run(String targetNodeKey, Class<ApiResponse> class_) {
 
 		Future<String> future = threadPool.submit(new Callable<String>() {
 
@@ -65,29 +63,47 @@ public class NetworkDHTCrawler {
 					nodes.put(targetNodeKey, new NodeDataPair(null, null));
 				}
 				final String json = new ApiRequest().getPeers(targetNodeKey).serialize();
-				Future<Object> o = threadTaskPool.submit(apiRequest(json, class_));
-				Object object = o.get(2000, TimeUnit.MILLISECONDS);
+				Future<String> o = threadTaskPool.submit(apiRequest(json));
+				String object = o.get(2000, TimeUnit.MILLISECONDS);
 				if (object == null) {
 					return null;
 				}
-				ApiPeersResponse peerReponse = (ApiPeersResponse) object;
-
-				if (peerReponse.getResponse().entrySet().isEmpty()) {
-
-					log.info("incorrect response: " + gson.toJson(peerReponse));
-					return gson.toJson(peerReponse);
+				ApiResponse apiResponse = null;
+				try {
+					apiResponse = gson.fromJson(object, class_);
+				} catch (JsonSyntaxException e) {
+					e.printStackTrace();
+					System.err.println("error response:\n" + object);
+					return null;
 				}
-				Iterator<Entry<String, Map<String, List<String>>>> it = peerReponse.getResponse().entrySet().iterator();
+				if (apiResponse == null) {
+					System.out.println("No response received");
+				}
+				
+				if(apiResponse.getStatus().equals("error")){
+					System.out.println("error");
+					return null;
+				}
+				ApiPeersResponse apiPeerResponse = gson.fromJson(object, ApiPeersResponse.class);
+				if (apiPeerResponse.getResponse().entrySet().isEmpty()) {
+					log.info("incorrect response: " + gson.toJson(apiPeerResponse));
+					return null;
+				}
+				Iterator<Entry<String, Map<String, List<String>>>> it = apiPeerResponse.getResponse().entrySet().iterator();
 				Entry<String, Map<String, List<String>>> peer = it.next();
-				if (peer.getKey().equals("error")) {
-					return gson.toJson(peerReponse);
-				}
 				NodeDataPair ndp = new NodeDataPair(peer.getKey(), targetNodeKey);
 				
 				String nodeInfo = new ApiRequest().getNodeInfo(targetNodeKey).serialize();
-				Future<Object> nodeInfoO = threadTaskPool.submit(apiRequest(nodeInfo, ApiNodeInfoResponse.class));
-				Object nodeInfoObject = nodeInfoO.get(2000, TimeUnit.MILLISECONDS);
-				ApiNodeInfoResponse nodeInfoReponse = (ApiNodeInfoResponse) nodeInfoObject;
+				Future<String> nodeInfoO = threadTaskPool.submit(apiRequest(nodeInfo));
+				String nodeInfoObject = nodeInfoO.get(2000, TimeUnit.MILLISECONDS);
+				ApiNodeInfoResponse nodeInfoReponse = null;
+				try {
+					nodeInfoReponse = gson.fromJson(nodeInfoObject, ApiNodeInfoResponse.class);
+				} catch (JsonSyntaxException e) {
+					e.printStackTrace();
+					System.err.println("error response:\n" + object);
+					return null;
+				}
 				if (nodeInfoReponse != null && !nodeInfoReponse.getResponse().isEmpty()) {
 					
 					Entry<String, Map<String, String>> keysNodeInfo = nodeInfoReponse.getResponse().entrySet().iterator().next();
@@ -124,18 +140,18 @@ public class NetworkDHTCrawler {
 						e.printStackTrace();
 					}
 				}
-				return gson.toJson(peerReponse);
+				return gson.toJson(apiPeerResponse);
 			}
 		});
 
 		return future;
 	}
 
-	private Callable<Object> apiRequest(String json, Type peers) {
+	private Callable<String> apiRequest(String json) {
 		
-		return new Callable<Object>() {
+		return new Callable<String>() {
 			@Override
-			public Object call() throws Exception {
+			public String call() throws Exception {
 				String response = null;
 				byte[] cbuf = new byte[1024*15];
 				Socket clientSocket = null;
@@ -168,19 +184,8 @@ public class NetworkDHTCrawler {
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
-				Gson gson = new Gson();
-				Object apiReponse = null;
-				try {
-					apiReponse = gson.fromJson(response, peers);
-				} catch (JsonSyntaxException e) {
-					e.printStackTrace();
-					System.err.println("error response:\n" + response);
-					return null;
-				}
-				if (apiReponse == null) {
-					System.out.println("No response received");
-				}
-				return apiReponse;
+				
+				return response;
 			}
 		};
 	}
@@ -194,7 +199,7 @@ public class NetworkDHTCrawler {
 
 		NetworkDHTCrawler crawler = new NetworkDHTCrawler();
 
-		Future<String> future = crawler.run(KEY_API_HOST, ApiPeersResponse.class);
+		Future<String> future = crawler.run(KEY_API_HOST, ApiResponse.class);
 		future.get();
 		/*
 		 * history part long timestamp = new Date().getTime(); new File(dataPath,
