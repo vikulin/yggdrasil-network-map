@@ -36,11 +36,10 @@ public class NetworkDHTCrawler {
 	//private static final String MAP_HISTORY_PATH = "C:\\Users\\Vadym\\git\\yggdrasil-network-map";
 	
 	private static final Logger log = LoggerFactory.getLogger(NetworkDHTCrawler.class);
-
-	private static final String ADMIN_API_HOST = "192.168.1.104";
 	
 	private static final String KEY_API_HOST = "323e321939b1b08e06b89b0ed8c57b09757f2974eba218887fdd68a45024d4c1";
 
+	private static final String ADMIN_API_HOST = "localhost";
 	private static final int ADMIN_API_PORT = 9001;
 
 	private static ExecutorService threadPool;
