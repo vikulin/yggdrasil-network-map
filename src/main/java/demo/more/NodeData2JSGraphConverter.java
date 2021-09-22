@@ -12,6 +12,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -35,14 +36,17 @@ public class NodeData2JSGraphConverter {
 	
 	public static void createJs(Map<String, NodeDataPair> nodes, Set<Link> links, String dataPath) throws IOException, ClassNotFoundException {
 		
-		Graph graph = new SingleGraph("Yggdrasil network");
-		Layout layout = new SpringBox(false);
+		Graph graph = new SingleGraph("RiV-mesh network");
+		Layout layout = new SpringBox(true, new Random(100001));
 		graph.addSink(layout);
 		graph.setStrict(true);
 		layout.addAttributeSink(graph);
 		BetweennessCentrality bcb = new BetweennessCentrality();
+		long id=0;
 		for(Entry<String, NodeDataPair> nodeEntry:nodes.entrySet()) {
-			String nodeId = nodeEntry.getValue().getId()+"";
+			id++;
+			nodeEntry.getValue().setId(id);
+			String nodeId = id+"";
 			Node node = graph.addNode(nodeId);
 			String ip = nodeEntry.getValue().getIp();
 			if(ip==null) {
@@ -51,15 +55,19 @@ public class NodeData2JSGraphConverter {
 			}
 			node.setAttribute("ip", ip);
 			node.setAttribute("key", nodeEntry.getKey());
+			node.setAttribute("os", nodeEntry.getValue().getPlatform());
+			node.setAttribute("arch", nodeEntry.getValue().getArch());
+			node.setAttribute("version", nodeEntry.getValue().getVersion());
+			node.setAttribute("name", nodeEntry.getValue().getName());
 		}
 		for(Link l:links) {
-			String key = l.getKey();
-			String ip = l.getIp();
-			NodeDataPair ndp = nodes.get(key);
+			String keyFrom = l.getKeyFrom();
+			String keyTo = l.getKeyTo();
+			NodeDataPair ndp = nodes.get(keyFrom);
 			if(ndp==null) {
 				continue;
 			}
-			Optional<Entry<String, NodeDataPair>> element = nodes.entrySet().stream().filter(n->n.getValue().getIp().equals(ip)).findFirst();
+			Optional<Entry<String, NodeDataPair>> element = nodes.entrySet().stream().filter(n->(n.getValue().getKey()!=null && n.getValue().getKey().equals(keyTo))).findFirst();
 			if(element.isEmpty()) {
 				continue;
 			}
@@ -68,27 +76,46 @@ public class NodeData2JSGraphConverter {
 				//skip self links
 				continue;
 			}
-			String edgeId = ndp.getId()+"-"+toId;
-			System.out.println("added adge:"+edgeId);
-			try {
+			if(ndp.getId()<toId) {
+				String edgeId = ndp.getId()+"-"+toId;
+				if(graph.getEdge(edgeId)!=null) {
+					continue;
+				}
+				graph.addEdge(edgeId , ndp.getId()+"", toId+"");
+				System.out.println("added adge:"+edgeId);
+			} else {
+				String reversedEdgeId = toId+"-"+ndp.getId();
+				if(graph.getEdge(reversedEdgeId)!=null) {
+					continue;
+				}
+				graph.addEdge(reversedEdgeId , toId+"", ndp.getId()+"");
+				System.out.println("added adge:"+reversedEdgeId);
+			}
+			
+			/*try {
 				graph.addEdge(edgeId , ndp.getId()+"", toId+"");
 			} catch (EdgeRejectedException e1) {
 				System.err.println("an existing edge");
-			}
+			}*/
 		}
 		int nodesCount = graph.getNodeCount();
 		System.out.println("nodesCount:"+nodesCount);
 		System.out.println("edgesCount:"+graph.getEdgeCount());
 		bcb.init(graph);
 		bcb.compute();
-		
+		layout.setQuality(0.99d);
+
 		// iterate the compute() method a number of times
-		while(layout.getStabilization() < 0.92){
+		while(layout.getStabilization() < 0.93){
 		    layout.compute();
 		}
-		  
-		StringBuilder nodesSb = new StringBuilder();
-		StringBuilder edgesSb = new StringBuilder();
+		
+
+		String preTitle = "function preTitle(text) {\r\n"
+				+ "		  const container = document.createElement(\"pre\");\r\n"
+				+ "		  container.innerText = text;\r\n"
+				+ "		  return container;\r\n"
+				+ "		};\n";
 		String beginNodes = "var nodes = [\n";
 		String rowNodes = "{id: %s, label: \"%s\", title: \"%s\", value: %d, group: %d, x: %.2f, y: %.2f},\n";
 		String rowEdges = "{from: %s, to: %s, width: %.2f},\n";
@@ -98,36 +125,54 @@ public class NodeData2JSGraphConverter {
 		String generated = "var generated = %d;\n";
 		String nodesNumber = "var nodesNumber = %d;\n";
 		String linksNumber = "var linksNumber = %d;";
-		nodesSb.append(beginNodes);
-		
-		Iterator<Node> nodeIt = graph.iterator();
-		while(nodeIt.hasNext()) {
-			Node node = nodeIt.next();
-			Object ip = node.getAttribute("ip");
-			if(ip==null) {
-				ip=":";
-			}
-			String label = ip.toString().substring(ip.toString().lastIndexOf(':') + 1);
-			long value = Double.valueOf(node.getAttribute("Cb").toString()).longValue()+5;
-			long group = value;
-			double[] coordinates = GraphPosLengthUtils.nodePosition(graph, node.getId());
-			nodesSb.append(String.format(Locale.ROOT, rowNodes, node.getId(), label, ip, value, group, 100*coordinates[0], 100*coordinates[1]));
-		}
-		
-		float width = 0.3f;
-		
+		float width = 0.7f;
 		int edgesCount = graph.getEdgeCount();	
-		
 		try (Writer writer = new FileWriter(new File(dataPath,"graph-data.js"))) {
+			//writer.append(preTitle);
 			writer.append(beginEdges);
 			for(int index = 0; index < edgesCount; index++) {
 				Edge edge = graph.getEdge(index);
-				writer.append(String.format(Locale.ROOT, rowEdges, edge.getNode0().getId(), edge.getNode1().getId(), width));
+				String edgeString = String.format(Locale.ROOT, rowEdges, edge.getNode0().getId(), edge.getNode1().getId(), width);
+				System.out.println(edgeString);
+				writer.append(edgeString);
 			}
-			writer.append(endEdges);
-			writer.append(nodesSb.toString());
-			writer.append(endNodes);
 			
+			writer.append(endEdges);
+			writer.append(beginNodes);
+			Iterator<Node> nodeIt = graph.iterator();
+			while(nodeIt.hasNext()) {
+				Node node = nodeIt.next();
+				Object ip = node.getAttribute("ip");
+				if(ip==null) {
+					ip=":";
+				}
+				Object os = node.getAttribute("os");
+				if(os==null) {
+					os="";
+				}
+				Object arch = node.getAttribute("arch");
+				if(arch==null) {
+					arch="";
+				}
+				Object version = node.getAttribute("version");
+				if(version==null) {
+					version="";
+				}
+				Object name = node.getAttribute("name");
+
+				String label = ip.toString().substring(ip.toString().lastIndexOf(':') + 1);
+				long value = Double.valueOf(node.getAttribute("Cb").toString()).longValue()+5;
+				long group = value;
+				double[] coordinates = GraphPosLengthUtils.nodePosition(graph, node.getId());
+				//String title = ip+"\\n"+os+" "+arch+" "+version;
+				String title = ip.toString();
+				if(name==null) {
+					writer.append(String.format(Locale.ROOT, rowNodes, node.getId(), label, title, value, group, 100*coordinates[0], 100*coordinates[1]));
+				} else {
+					writer.append(String.format(Locale.ROOT, rowNodes, node.getId(), name, title, value, group, 100*coordinates[0], 100*coordinates[1]));
+				}
+			}
+			writer.append(endNodes);
 			writer.append(String.format(generated, new Date().getTime()));
 			writer.append(String.format(nodesNumber, graph.getNodeCount()));
 			writer.append(String.format(linksNumber, graph.getEdgeCount()));

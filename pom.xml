@@ -2,13 +2,13 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>yggdrasil-network-map</groupId>
-	<artifactId>yggdrasil-network-map</artifactId>
+	<groupId>riv-mesh-network-map</groupId>
+	<artifactId>riv-mesh-network-map</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>war</packaging>
 
 	<properties>
-		<zk-version>9.5.0.2-Eval</zk-version>
+		<zk-version>9.6.0.1-Eval</zk-version>
 	</properties>
 
 	<repositories>
@@ -146,7 +146,7 @@
 	</dependencies>
 
 	<build>
-		<finalName>yggdrasil-network-map</finalName>
+		<finalName>ROOT</finalName>
 		<plugins>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>

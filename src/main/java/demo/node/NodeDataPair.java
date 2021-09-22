@@ -3,10 +3,14 @@ package demo.node;
 public class NodeDataPair {
 	
 	private Long id;
-	
 	private String ip;
-	
 	private String key;
+	
+	private String arch;
+	private String version;
+	private String platform;
+	
+	private String name;
 	
 	public NodeDataPair(String ip, String key) {
 		this.ip = ip;
@@ -35,6 +39,38 @@ public class NodeDataPair {
 
 	public void setId(Long id) {
 		this.id = id;
+	}
+
+	public String getArch() {
+		return arch;
+	}
+
+	public void setArch(String arch) {
+		this.arch = arch;
+	}
+
+	public String getVersion() {
+		return version;
+	}
+
+	public void setVersion(String version) {
+		this.version = version;
+	}
+
+	public String getPlatform() {
+		return platform;
+	}
+
+	public void setPlatform(String platform) {
+		this.platform = platform;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
 	}
 
 	@Override
