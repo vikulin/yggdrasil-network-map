@@ -39,8 +39,8 @@ public class NetworkDHTCrawler {
 	
 	private static final String KEY_API_HOST = "323e321939b1b08e06b89b0ed8c57b09757f2974eba218887fdd68a45024d4c1";
 
-	private static final String ADMIN_API_HOST = "localhost";
-	private static final int ADMIN_API_PORT = 9001;
+	private static final String ADMIN_API_HOST = "192.168.1.106";
+	private static final int ADMIN_API_PORT = 9002;
 
 	private static ExecutorService threadPool;
 	private static ExecutorService threadTaskPool;
@@ -100,7 +100,7 @@ public class NetworkDHTCrawler {
 					nodeInfoReponse = gson.fromJson(nodeInfoObject, ApiNodeInfoResponse.class);
 				} catch (JsonSyntaxException e) {
 					e.printStackTrace();
-					System.err.println("error response:\n" + object);
+					System.err.println("error response:\n" + nodeInfoObject);
 					return null;
 				}
 				if (nodeInfoReponse != null && !nodeInfoReponse.getResponse().isEmpty()) {
@@ -108,22 +108,22 @@ public class NetworkDHTCrawler {
 						System.out.println("error");
 						return null;
 					}
-					Entry<String, Map<String, String>> keysNodeInfo = nodeInfoReponse.getResponse().entrySet().iterator().next();
-					String buildarch = keysNodeInfo.getValue().get("buildarch");
-					String buildplatform = keysNodeInfo.getValue().get("buildplatform");
-					String buildversion = keysNodeInfo.getValue().get("buildversion");
-					String name = keysNodeInfo.getValue().get("name");
+					Entry<String, Map<String, Object>> keysNodeInfo = nodeInfoReponse.getResponse().entrySet().iterator().next();
+					Object buildarch = keysNodeInfo.getValue().get("buildarch");
+					Object buildplatform = keysNodeInfo.getValue().get("buildplatform");
+					Object buildversion = keysNodeInfo.getValue().get("buildversion");
+					Object name = keysNodeInfo.getValue().get("name");
 					if (buildarch != null) {
-						ndp.setArch(buildarch);
+						ndp.setArch(buildarch.toString());
 					}
 					if (buildplatform != null) {
-						ndp.setPlatform(buildplatform);
+						ndp.setPlatform(buildplatform.toString());
 					}
 					if (buildversion != null) {
-						ndp.setVersion(buildversion);
+						ndp.setVersion(buildversion.toString());
 					}
 					if (name != null) {
-						ndp.setName(name);
+						ndp.setName(name.toString());
 					}
 				}
 				
@@ -155,7 +155,7 @@ public class NetworkDHTCrawler {
 			@Override
 			public String call() throws Exception {
 				String response = null;
-				byte[] cbuf = new byte[1024*15];
+				byte[] cbuf = new byte[1024*64];
 				Socket clientSocket = null;
 				DataOutputStream os = null;
 				InputStream is = null;
@@ -171,20 +171,25 @@ public class NetworkDHTCrawler {
 					sb.append(new String(Arrays.copyOf(cbuf, i)));
 					response = sb.toString();
 					System.out.println("Request:\n"+json+"\n"+"Response:\n"+response);
+					try {
+						gson.fromJson(response, ApiResponse.class);
+					} catch (JsonSyntaxException e) {
+						e.printStackTrace();
+						i = is.read(cbuf);
+						sb.append(new String(Arrays.copyOf(cbuf, i)));
+						response = sb.toString();
+						return response;
+					}
 				} catch (java.net.SocketException e) {
 					e.printStackTrace();
 					return null;
 				} catch (Exception e) {
 					e.printStackTrace();
 					return null;
-				}
-
-				try {
+				} finally {
 					os.close();
 					is.close();
 					clientSocket.close();
-				} catch (IOException e) {
-					e.printStackTrace();
 				}
 				
 				return response;
@@ -229,5 +234,15 @@ public class NetworkDHTCrawler {
 			throws InterruptedException, ExecutionException, IOException, ClassNotFoundException {
 		System.out.println(new File(".").toPath());
 		run(".");
+		/*
+		NetworkDHTCrawler crawler = new NetworkDHTCrawler();
+		//String json = "{\"keepalive\":true,\"key\":\"fb370bd6ec82c46f57973ec0d4e26d9c1af8692107cb9a0936f5e258775a014f\",\"request\":\"debug_remotegetpeers\"}\n";
+		String json = "{\"keepalive\":true,\"key\":\"39c339079f3db93d04c3c44985759f8675d038b2a282e1b2f140c58db9c6d546\",\"request\":\"debug_remotegetpeers\"}\n";
+		
+		final ExecutorService threadPool = Executors.newFixedThreadPool(1);	
+		Future<String> future = threadPool.submit(crawler.apiRequest(json));
+		System.out.println(future.get());
+		threadPool.shutdown();
+		*/
 	}
 }
