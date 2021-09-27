@@ -7,7 +7,7 @@ import demo.filter.CORSResponseFilter;
 /**
  * Registers the components to be used by the JAX-RS application
  * 
- * @author ama
+ * @author Vadym Vikulin <vadym.vikulin@rivchain.org>
  * 
  */
 public class RestDemoJaxRsApplication extends ResourceConfig {
