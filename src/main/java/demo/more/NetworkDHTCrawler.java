@@ -14,6 +14,7 @@ import java.util.Map.Entry;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ExecutionException;
@@ -42,19 +43,20 @@ public class NetworkDHTCrawler {
 	private static final String ADMIN_API_HOST = "192.168.1.106";
 	private static final int ADMIN_API_PORT = 9002;
 
-	private static ExecutorService threadPool;
-	private static ExecutorService threadTaskPool;
 	private static SortedMap<String, NodeDataPair> nodes; // node key, ip nodes
 	private static SortedSet<Link> links; // node key, ip links
 
 	public static Gson gson = new Gson();
 
 	private Future<String> run(String targetNodeKey, Class<ApiResponse> class_) {
+		
+		final ExecutorService threadPool = Executors.newFixedThreadPool(1);
 
 		Future<String> future = threadPool.submit(new Callable<String>() {
 
 			@Override
 			public String call() throws Exception {
+				ExecutorService threadTaskPool = Executors.newFixedThreadPool(2);
 				log.info("found: " + nodes.size() + " records");
 				if (NetworkDHTCrawler.nodes.get(targetNodeKey) != null) {
 					return null;
@@ -63,7 +65,7 @@ public class NetworkDHTCrawler {
 				}
 				final String json = new ApiRequest().getPeers(targetNodeKey).serialize();
 				Future<String> o = threadTaskPool.submit(apiRequest(json));
-				String object = o.get(2000, TimeUnit.MILLISECONDS);
+				String object = o.get(5000, TimeUnit.MILLISECONDS);
 				if (object == null) {
 					return null;
 				}
@@ -94,7 +96,9 @@ public class NetworkDHTCrawler {
 				
 				String nodeInfo = new ApiRequest().getNodeInfo(targetNodeKey).serialize();
 				Future<String> nodeInfoO = threadTaskPool.submit(apiRequest(nodeInfo));
-				String nodeInfoObject = nodeInfoO.get(2000, TimeUnit.MILLISECONDS);
+				String nodeInfoObject = nodeInfoO.get(5000, TimeUnit.MILLISECONDS);
+				threadTaskPool.shutdown();
+				
 				ApiNodeInfoResponse nodeInfoReponse = null;
 				try {
 					nodeInfoReponse = gson.fromJson(nodeInfoObject, ApiNodeInfoResponse.class);
@@ -129,19 +133,25 @@ public class NetworkDHTCrawler {
 				
 				nodes.put(targetNodeKey, ndp);
 				List<String> peerKeys = peer.getValue().get("keys");
+				ConcurrentLinkedQueue<Future<String>> tasks = new ConcurrentLinkedQueue<Future<String>>();
 				for (String peerKey : peerKeys) {
 					links.add(new Link(peerKey, targetNodeKey));
 					// duplicated values are checked by Set
 					if (NetworkDHTCrawler.nodes.get(peerKey) != null) {
 						continue;
 					}
+					Thread.sleep(1000);
+					tasks.add(NetworkDHTCrawler.this.run(peerKey, class_));
 					System.out.println("Total links:" + links.size());
+				}
+				for(Future<String> task: tasks) {
 					try {
-						NetworkDHTCrawler.this.run(peerKey, class_).get();
+						task.get();
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
 				}
+				//threadPool.shutdownNow();
 				return gson.toJson(apiPeerResponse);
 			}
 		});
@@ -199,8 +209,7 @@ public class NetworkDHTCrawler {
 
 	public static void run(String dataPath)
 			throws InterruptedException, ExecutionException, IOException, ClassNotFoundException {
-		threadPool = Executors.newFixedThreadPool(10);
-		threadTaskPool = Executors.newFixedThreadPool(10);
+		
 		nodes = new ConcurrentSkipListMap<String, NodeDataPair>();
 		links = new ConcurrentSkipListSet<Link>();
 
@@ -220,7 +229,7 @@ public class NetworkDHTCrawler {
 		 * GsonBuilder().setPrettyPrinting().create(); gson.toJson(links, writer); }
 		 */
 		System.out.println("done");
-		threadPool.shutdownNow();
+
 		try {
 			System.out.println("Nodes:" + nodes.size() + " Links:" + links.size());
 			NodeData2JSGraphConverter.createJs(nodes, links, dataPath);
