@@ -20,11 +20,13 @@ import org.gephi.graph.api.GraphController;
 import org.gephi.graph.api.GraphModel;
 import org.gephi.graph.api.Node;
 import org.gephi.graph.api.UndirectedGraph;
+import org.gephi.graph.impl.ColumnImpl;
 import org.gephi.layout.plugin.force.StepDisplacement;
 import org.gephi.layout.plugin.force.yifanHu.YifanHuLayout;
 import org.gephi.project.api.ProjectController;
 import org.gephi.project.api.Workspace;
 import org.openide.util.Lookup;
+import org.gephi.graph.api.Column;
 
 import demo.node.NodeDataPair;
 
@@ -61,12 +63,18 @@ public class NodeData2JSGraphConverter {
 				System.err.println("ip is null for node:"+nodeId);
 				
 			}
-			node.setAttribute("ip", ip);
-			node.setAttribute("key", nodeEntry.getKey());
-			node.setAttribute("os", nodeEntry.getValue().getPlatform());
-			node.setAttribute("arch", nodeEntry.getValue().getArch());
-			node.setAttribute("version", nodeEntry.getValue().getVersion());
-			node.setAttribute("name", nodeEntry.getValue().getName());
+			Column ipc = new ColumnImpl("ip", String.class, "ip", "", null, false, false);
+			node.setAttribute(ipc, ip);
+			Column keyc = new ColumnImpl("key", String.class, "key", "", null, false, false);
+			node.setAttribute(keyc, nodeEntry.getKey());
+			Column osc = new ColumnImpl("os", String.class, "os", "", null, false, false);
+			node.setAttribute(osc, nodeEntry.getValue().getPlatform());
+			Column archc = new ColumnImpl("arch", String.class, "arch", "", null, false, false);
+			node.setAttribute(archc, nodeEntry.getValue().getArch());
+			Column versionc = new ColumnImpl("version", String.class, "version", "", null, false, false);
+			node.setAttribute(versionc, nodeEntry.getValue().getVersion());
+			Column namec = new ColumnImpl("name", String.class, "name", "", null, false, false);
+			node.setAttribute(namec, nodeEntry.getValue().getName());
 		}
 		for(Link l:links) {
 			String keyFrom = l.getKeyFrom();
