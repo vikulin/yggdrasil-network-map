@@ -20,12 +20,16 @@ import org.gephi.graph.api.GraphController;
 import org.gephi.graph.api.GraphModel;
 import org.gephi.graph.api.Node;
 import org.gephi.graph.api.UndirectedGraph;
-import org.gephi.graph.impl.ColumnImpl;
 import org.gephi.layout.plugin.force.StepDisplacement;
 import org.gephi.layout.plugin.force.yifanHu.YifanHuLayout;
 import org.gephi.project.api.ProjectController;
 import org.gephi.project.api.Workspace;
+import org.gephi.statistics.plugin.GraphDistance;
 import org.openide.util.Lookup;
+import org.gephi.appearance.api.AppearanceController;
+import org.gephi.appearance.api.AppearanceModel;
+import org.gephi.appearance.api.Function;
+import org.gephi.appearance.plugin.RankingNodeSizeTransformer;
 import org.gephi.graph.api.Column;
 
 import demo.node.NodeDataPair;
@@ -37,6 +41,8 @@ import demo.node.NodeDataPair;
 public class NodeData2JSGraphConverter {
 	
 	private static GraphModel graphModel;
+	private static AppearanceController appearanceController;
+	private static AppearanceModel appearanceModel;
 
 	static {
 		 //Init a project - and therefore a workspace
@@ -46,6 +52,8 @@ public class NodeData2JSGraphConverter {
 
         //Get and model
         graphModel = Lookup.getDefault().lookup(GraphController.class).getGraphModel(workspace);
+        appearanceController = Lookup.getDefault().lookup(AppearanceController.class);
+        appearanceModel = appearanceController.getModel();
 	}
 	
 	public static void createJs(Map<String, NodeDataPair> nodes, Set<Link> links, String dataPath) throws IOException, ClassNotFoundException {
@@ -53,6 +61,9 @@ public class NodeData2JSGraphConverter {
 		UndirectedGraph graph = graphModel.getUndirectedGraph();
 		
 		long id=0;
+        for (Column col : graphModel.getNodeTable()) {
+            System.out.println(col);
+        }
 		for(Entry<String, NodeDataPair> nodeEntry:nodes.entrySet()) {
 			id++;
 			nodeEntry.getValue().setId(id);
@@ -63,18 +74,54 @@ public class NodeData2JSGraphConverter {
 				System.err.println("ip is null for node:"+nodeId);
 				
 			}
-			Column ipc = new ColumnImpl("ip", String.class, "ip", "", null, false, false);
-			node.setAttribute(ipc, ip);
-			Column keyc = new ColumnImpl("key", String.class, "key", "", null, false, false);
-			node.setAttribute(keyc, nodeEntry.getKey());
-			Column osc = new ColumnImpl("os", String.class, "os", "", null, false, false);
-			node.setAttribute(osc, nodeEntry.getValue().getPlatform());
-			Column archc = new ColumnImpl("arch", String.class, "arch", "", null, false, false);
-			node.setAttribute(archc, nodeEntry.getValue().getArch());
-			Column versionc = new ColumnImpl("version", String.class, "version", "", null, false, false);
-			node.setAttribute(versionc, nodeEntry.getValue().getVersion());
-			Column namec = new ColumnImpl("name", String.class, "name", "", null, false, false);
-			node.setAttribute(namec, nodeEntry.getValue().getName());
+			if(!node.getAttributeKeys().contains("ip")) {
+				Column ipc = graphModel.getNodeTable().addColumn("ip", String.class);
+				node.setAttribute(ipc, ip);
+			} else {
+				Column ipc = graphModel.getNodeTable().getColumn("ip");
+				node.setAttribute(ipc, ip);
+			}
+			
+			if(!node.getAttributeKeys().contains("key")) {
+				Column ipc = graphModel.getNodeTable().addColumn("key", String.class);
+				node.setAttribute(ipc, nodeEntry.getKey());
+			} else {
+				Column ipc = graphModel.getNodeTable().getColumn("key");
+				node.setAttribute(ipc, nodeEntry.getKey());
+			}
+			
+			if(!node.getAttributeKeys().contains("os")) {
+				Column ipc = graphModel.getNodeTable().addColumn("os", String.class);
+				node.setAttribute(ipc, nodeEntry.getValue().getPlatform());
+			} else {
+				Column ipc = graphModel.getNodeTable().getColumn("os");
+				node.setAttribute(ipc, nodeEntry.getValue().getPlatform());
+			}
+			
+			if(!node.getAttributeKeys().contains("arch")) {
+				Column ipc = graphModel.getNodeTable().addColumn("arch", String.class);
+				node.setAttribute(ipc, nodeEntry.getValue().getArch());
+			} else {
+				Column ipc = graphModel.getNodeTable().getColumn("arch");
+				node.setAttribute(ipc, nodeEntry.getValue().getArch());
+			}
+			
+			if(!node.getAttributeKeys().contains("version")) {
+				Column ipc = graphModel.getNodeTable().addColumn("version", String.class);
+				node.setAttribute(ipc, nodeEntry.getValue().getVersion());
+			} else {
+				Column ipc = graphModel.getNodeTable().getColumn("version");
+				node.setAttribute(ipc, nodeEntry.getValue().getVersion());
+			}
+			
+			if(!node.getAttributeKeys().contains("name")) {
+				Column ipc = graphModel.getNodeTable().addColumn("name", String.class);
+				node.setAttribute(ipc, nodeEntry.getValue().getName());
+			} else {
+				Column ipc = graphModel.getNodeTable().getColumn("name");
+				node.setAttribute(ipc, nodeEntry.getValue().getName());
+			}
+			graph.addNode(node);
 		}
 		for(Link l:links) {
 			String keyFrom = l.getKeyFrom();
@@ -133,8 +180,20 @@ public class NodeData2JSGraphConverter {
             layout.goAlgo();
         }
         layout.endAlgo();
-		
-
+        
+        //Get Centrality
+        GraphDistance distance = new GraphDistance();
+        distance.setDirected(true);
+        distance.execute(graphModel);
+        
+      //Rank size by centrality
+        Column centralityColumn = graphModel.getNodeTable().getColumn(GraphDistance.BETWEENNESS);
+        Function centralityRanking = appearanceModel.getNodeFunction(graph, centralityColumn, RankingNodeSizeTransformer.class);
+        RankingNodeSizeTransformer centralityTransformer = (RankingNodeSizeTransformer) centralityRanking.getTransformer();
+        centralityTransformer.setMinSize(3);
+        centralityTransformer.setMaxSize(10);
+        appearanceController.transform(centralityRanking);
+        
 		String preTitle = "function preTitle(text) {\r\n"
 				+ "		  const container = document.createElement(\"pre\");\r\n"
 				+ "		  container.innerText = text;\r\n"
@@ -186,12 +245,13 @@ public class NodeData2JSGraphConverter {
 				Object name = node.getAttribute("name");
 
 				String label = ip.toString().substring(ip.toString().lastIndexOf(':') + 1);
-				long value = Double.valueOf(node.getAttribute("Cb").toString()).longValue()+5;
+				
+				long value = Double.valueOf(node.getAttribute(centralityColumn).toString()).longValue();
 				long group = value;
 				//double[] coordinates = GraphPosLengthUtils.nodePosition(graph, node.getId());
 				//String title = ip+"\\n"+os+" "+arch+" "+version;
-				float x = node.x();
-				float y = node.y();
+				float x = 10*node.x();
+				float y = 10*node.y();
 				String title = ip.toString();
 				if(name==null) {
 					writer.append(String.format(Locale.ROOT, rowNodes, node.getId(), label, title, value, group, x, y));
