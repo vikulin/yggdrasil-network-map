@@ -151,7 +151,7 @@ public class NetworkDHTCrawler {
 						e.printStackTrace();
 					}
 				}
-				//threadPool.shutdownNow();
+				threadPool.shutdownNow();
 				return gson.toJson(apiPeerResponse);
 			}
 		});
