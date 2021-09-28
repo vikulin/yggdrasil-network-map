@@ -12,19 +12,19 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.graphstream.algorithm.BetweennessCentrality;
-import org.graphstream.graph.Edge;
-import org.graphstream.graph.EdgeRejectedException;
-import org.graphstream.graph.Graph;
-import org.graphstream.graph.Node;
-import org.graphstream.graph.implementations.SingleGraph;
-import org.graphstream.ui.graphicGraph.GraphPosLengthUtils;
-import org.graphstream.ui.layout.Layout;
-import org.graphstream.ui.layout.springbox.implementations.SpringBox;
+import org.gephi.graph.api.Edge;
+import org.gephi.graph.api.GraphController;
+import org.gephi.graph.api.GraphModel;
+import org.gephi.graph.api.Node;
+import org.gephi.graph.api.UndirectedGraph;
+import org.gephi.layout.plugin.force.StepDisplacement;
+import org.gephi.layout.plugin.force.yifanHu.YifanHuLayout;
+import org.gephi.project.api.ProjectController;
+import org.gephi.project.api.Workspace;
+import org.openide.util.Lookup;
 
 import demo.node.NodeDataPair;
 
@@ -34,20 +34,28 @@ import demo.node.NodeDataPair;
  */
 public class NodeData2JSGraphConverter {
 	
+	private static GraphModel graphModel;
+
+	static {
+		 //Init a project - and therefore a workspace
+        ProjectController pc = Lookup.getDefault().lookup(ProjectController.class);
+        pc.newProject();
+        Workspace workspace = pc.getCurrentWorkspace();
+
+        //Get and model
+        graphModel = Lookup.getDefault().lookup(GraphController.class).getGraphModel(workspace);
+	}
+	
 	public static void createJs(Map<String, NodeDataPair> nodes, Set<Link> links, String dataPath) throws IOException, ClassNotFoundException {
 		
-		Graph graph = new SingleGraph("RiV-mesh network");
-		Layout layout = new SpringBox(true, new Random(100001));
-		graph.addSink(layout);
-		graph.setStrict(true);
-		layout.addAttributeSink(graph);
-		BetweennessCentrality bcb = new BetweennessCentrality();
+		UndirectedGraph graph = graphModel.getUndirectedGraph();
+		
 		long id=0;
 		for(Entry<String, NodeDataPair> nodeEntry:nodes.entrySet()) {
 			id++;
 			nodeEntry.getValue().setId(id);
 			String nodeId = id+"";
-			Node node = graph.addNode(nodeId);
+			Node node = graphModel.factory().newNode(nodeId);
 			String ip = nodeEntry.getValue().getIp();
 			if(ip==null) {
 				System.err.println("ip is null for node:"+nodeId);
@@ -81,14 +89,20 @@ public class NodeData2JSGraphConverter {
 				if(graph.getEdge(edgeId)!=null) {
 					continue;
 				}
-				graph.addEdge(edgeId , ndp.getId()+"", toId+"");
+				Node n1 = graph.getNode(ndp.getId()+"");
+				Node n2 = graph.getNode(toId+"");
+				Edge e1 = graphModel.factory().newEdge(n1, n2, 0, 1.0, false);
+				graph.addEdge(e1);
 				System.out.println("added adge:"+edgeId);
 			} else {
 				String reversedEdgeId = toId+"-"+ndp.getId();
 				if(graph.getEdge(reversedEdgeId)!=null) {
 					continue;
 				}
-				graph.addEdge(reversedEdgeId , toId+"", ndp.getId()+"");
+				Node n1 = graph.getNode(toId+"");
+				Node n2 = graph.getNode(ndp.getId()+"");
+				Edge e1 = graphModel.factory().newEdge(n1, n2, 0, 1.0, false);
+				graph.addEdge(e1);
 				System.out.println("added adge:"+reversedEdgeId);
 			}
 			
@@ -101,14 +115,16 @@ public class NodeData2JSGraphConverter {
 		int nodesCount = graph.getNodeCount();
 		System.out.println("nodesCount:"+nodesCount);
 		System.out.println("edgesCount:"+graph.getEdgeCount());
-		bcb.init(graph);
-		bcb.compute();
-		layout.setQuality(0.99d);
 
-		// iterate the compute() method a number of times
-		while(layout.getStabilization() < 0.93){
-		    layout.compute();
-		}
+		//Layout - 100 Yifan Hu passes
+        YifanHuLayout layout = new YifanHuLayout(null, new StepDisplacement(1f));
+        layout.setGraphModel(graphModel);
+        layout.resetPropertiesValues();
+        layout.initAlgo();
+        for (int i = 0; i < 100 && layout.canAlgo(); i++) {
+            layout.goAlgo();
+        }
+        layout.endAlgo();
 		
 
 		String preTitle = "function preTitle(text) {\r\n"
@@ -126,20 +142,21 @@ public class NodeData2JSGraphConverter {
 		String nodesNumber = "var nodesNumber = %d;\n";
 		String linksNumber = "var linksNumber = %d;";
 		float width = 0.7f;
-		int edgesCount = graph.getEdgeCount();	
+			
 		try (Writer writer = new FileWriter(new File(dataPath,"graph-data.js"))) {
 			//writer.append(preTitle);
 			writer.append(beginEdges);
-			for(int index = 0; index < edgesCount; index++) {
-				Edge edge = graph.getEdge(index);
-				String edgeString = String.format(Locale.ROOT, rowEdges, edge.getNode0().getId(), edge.getNode1().getId(), width);
+			Iterator<Edge> edges = graph.getEdges().iterator();
+			while(edges.hasNext()) {
+				Edge edge = edges.next();
+				String edgeString = String.format(Locale.ROOT, rowEdges, edge.getSource().getId(), edge.getTarget().getId(), width);
 				System.out.println(edgeString);
 				writer.append(edgeString);
 			}
 			
 			writer.append(endEdges);
 			writer.append(beginNodes);
-			Iterator<Node> nodeIt = graph.iterator();
+			Iterator<Node> nodeIt = graph.getNodes().iterator();
 			while(nodeIt.hasNext()) {
 				Node node = nodeIt.next();
 				Object ip = node.getAttribute("ip");
@@ -163,13 +180,15 @@ public class NodeData2JSGraphConverter {
 				String label = ip.toString().substring(ip.toString().lastIndexOf(':') + 1);
 				long value = Double.valueOf(node.getAttribute("Cb").toString()).longValue()+5;
 				long group = value;
-				double[] coordinates = GraphPosLengthUtils.nodePosition(graph, node.getId());
+				//double[] coordinates = GraphPosLengthUtils.nodePosition(graph, node.getId());
 				//String title = ip+"\\n"+os+" "+arch+" "+version;
+				float x = node.x();
+				float y = node.y();
 				String title = ip.toString();
 				if(name==null) {
-					writer.append(String.format(Locale.ROOT, rowNodes, node.getId(), label, title, value, group, 100*coordinates[0], 100*coordinates[1]));
+					writer.append(String.format(Locale.ROOT, rowNodes, node.getId(), label, title, value, group, x, y));
 				} else {
-					writer.append(String.format(Locale.ROOT, rowNodes, node.getId(), name, title, value, group, 100*coordinates[0], 100*coordinates[1]));
+					writer.append(String.format(Locale.ROOT, rowNodes, node.getId(), name, title, value, group, x, y));
 				}
 			}
 			writer.append(endNodes);
