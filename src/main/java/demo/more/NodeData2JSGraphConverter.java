@@ -21,7 +21,8 @@ import org.gephi.graph.api.GraphModel;
 import org.gephi.graph.api.Node;
 import org.gephi.graph.api.UndirectedGraph;
 import org.gephi.layout.plugin.force.StepDisplacement;
-import org.gephi.layout.plugin.force.yifanHu.YifanHuLayout;
+import org.gephi.layout.plugin.forceAtlas2.ForceAtlas2;
+import org.gephi.layout.plugin.forceAtlas2.ForceAtlas2Builder;
 import org.gephi.project.api.ProjectController;
 import org.gephi.project.api.Workspace;
 import org.gephi.statistics.plugin.GraphDistance;
@@ -160,23 +161,18 @@ public class NodeData2JSGraphConverter {
 				graph.addEdge(e1);
 				System.out.println("added adge:"+reversedEdgeId);
 			}
-			
-			/*try {
-				graph.addEdge(edgeId , ndp.getId()+"", toId+"");
-			} catch (EdgeRejectedException e1) {
-				System.err.println("an existing edge");
-			}*/
 		}
 		int nodesCount = graph.getNodeCount();
 		System.out.println("nodesCount:"+nodesCount);
 		System.out.println("edgesCount:"+graph.getEdgeCount());
 
-		//Layout - 100 Yifan Hu passes
-        YifanHuLayout layout = new YifanHuLayout(null, new StepDisplacement(1f));
+		ForceAtlas2Builder lb = new ForceAtlas2Builder();
+		ForceAtlas2 layout = new ForceAtlas2(lb);
+		layout.setGravity(100d);
         layout.setGraphModel(graphModel);
         layout.resetPropertiesValues();
         layout.initAlgo();
-        for (int i = 0; i < 100 && layout.canAlgo(); i++) {
+        for (int i = 0; i < 1200 && layout.canAlgo(); i++) {
             layout.goAlgo();
         }
         layout.endAlgo();
@@ -250,8 +246,8 @@ public class NodeData2JSGraphConverter {
 				long group = value;
 				//double[] coordinates = GraphPosLengthUtils.nodePosition(graph, node.getId());
 				//String title = ip+"\\n"+os+" "+arch+" "+version;
-				float x = 10*node.x();
-				float y = 10*node.y();
+				float x = node.x();
+				float y = node.y();
 				String title = ip.toString();
 				if(name==null) {
 					writer.append(String.format(Locale.ROOT, rowNodes, node.getId(), label, title, value, group, x, y));
