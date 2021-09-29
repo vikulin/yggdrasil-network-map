@@ -20,7 +20,8 @@ import org.gephi.graph.api.GraphController;
 import org.gephi.graph.api.GraphModel;
 import org.gephi.graph.api.Node;
 import org.gephi.graph.api.UndirectedGraph;
-import org.gephi.layout.plugin.force.StepDisplacement;
+import org.gephi.io.exporter.api.ExportController;
+import org.gephi.io.exporter.spi.GraphExporter;
 import org.gephi.layout.plugin.forceAtlas2.ForceAtlas2;
 import org.gephi.layout.plugin.forceAtlas2.ForceAtlas2Builder;
 import org.gephi.project.api.ProjectController;
@@ -44,6 +45,7 @@ public class NodeData2JSGraphConverter {
 	private static GraphModel graphModel;
 	private static AppearanceController appearanceController;
 	private static AppearanceModel appearanceModel;
+	private static Workspace workspace;
 
 	static {
 		 //Init a project - and therefore a workspace
@@ -168,9 +170,16 @@ public class NodeData2JSGraphConverter {
 
 		ForceAtlas2Builder lb = new ForceAtlas2Builder();
 		ForceAtlas2 layout = new ForceAtlas2(lb);
-		layout.setGravity(100d);
+		layout.resetPropertiesValues();
+		layout.setGravity(20d);
+		layout.setLinLogMode(true);
+		layout.setScalingRatio(30d);
+		layout.setThreadsCount(11);
+		layout.setBarnesHutTheta(0.5d);
+		layout.setEdgeWeightInfluence(1.0d);
+		//layout.setAdjustSizes(true);
         layout.setGraphModel(graphModel);
-        layout.resetPropertiesValues();
+        
         layout.initAlgo();
         for (int i = 0; i < 1200 && layout.canAlgo(); i++) {
             layout.goAlgo();
@@ -259,6 +268,15 @@ public class NodeData2JSGraphConverter {
 			writer.append(String.format(generated, new Date().getTime()));
 			writer.append(String.format(nodesNumber, graph.getNodeCount()));
 			writer.append(String.format(linksNumber, graph.getEdgeCount()));
+			
+			 //Export full graph
+	        ExportController ec = Lookup.getDefault().lookup(ExportController.class);
+	        try {
+	            ec.exportFile(new File("io_gexf.gexf"));
+	        } catch (IOException ex) {
+	            ex.printStackTrace();
+	            return;
+	        }
 		}
 		
 	}
