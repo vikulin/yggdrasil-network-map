@@ -42,10 +42,10 @@ public class NetworkDHTCrawler {
 	
 	private static final Logger log = LoggerFactory.getLogger(NetworkDHTCrawler.class);
 	
-	private static final String KEY_API_HOST = "11dbeb74048638c9532077a9b19b20cd5a8bf6f44312a1e8ba7d791e303f8e29";
+	private static final String KEY_API_HOST = "323e321939b1b08e06b89b0ed8c57b09757f2974eba218887fdd68a45024d4c1";
 
-	private static final String ADMIN_API_HOST = "192.168.1.106";
-	private static final int ADMIN_API_PORT = 9002;
+	private static final String ADMIN_API_HOST = "localhost";
+	private static final int ADMIN_API_PORT = 9001;
 
 	private static SortedMap<String, NodeDataPair> nodes; // node key, ip nodes
 	private static SortedSet<Link> links; // node key, ip links
