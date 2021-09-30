@@ -32,6 +32,10 @@ import com.google.gson.JsonSyntaxException;
 import demo.node.NodeDataPair;
 
 public class NetworkDHTCrawler {
+	
+	static {
+		System.setProperty("org.graphstream.ui", "swing");
+	}
 
 	private static final String MAP_HISTORY_PATH = "/opt/tomcat/yggdrasil-map-history";
 	//private static final String MAP_HISTORY_PATH = "C:\\Users\\Vadym\\git\\yggdrasil-network-map";
@@ -151,7 +155,7 @@ public class NetworkDHTCrawler {
 						e.printStackTrace();
 					}
 				}
-				//threadPool.shutdownNow();
+				threadPool.shutdownNow();
 				return gson.toJson(apiPeerResponse);
 			}
 		});
@@ -247,8 +251,8 @@ public class NetworkDHTCrawler {
 	public static void main(String args[])
 			throws InterruptedException, ExecutionException, IOException, ClassNotFoundException {
 		System.out.println(new File(".").toPath());
-		//run(".");
-		
+		run(".");
+		/*
 		NetworkDHTCrawler crawler = new NetworkDHTCrawler();
 		//String json = "{\"keepalive\":true,\"key\":\"fb370bd6ec82c46f57973ec0d4e26d9c1af8692107cb9a0936f5e258775a014f\",\"request\":\"debug_remotegetpeers\"}\n";
 		//String json = "{\"keepalive\":true,\"key\":\"39c339079f3db93d04c3c44985759f8675d038b2a282e1b2f140c58db9c6d546\",\"request\":\"debug_remotegetpeers\"}\n";
@@ -258,6 +262,6 @@ public class NetworkDHTCrawler {
 		Future<String> future = threadPool.submit(crawler.apiRequest(json));
 		System.out.println(future.get());
 		threadPool.shutdown();
-		
+		*/
 	}
 }

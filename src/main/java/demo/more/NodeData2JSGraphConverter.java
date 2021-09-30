@@ -18,7 +18,6 @@ import java.util.stream.Collectors;
 
 import org.graphstream.algorithm.BetweennessCentrality;
 import org.graphstream.graph.Edge;
-import org.graphstream.graph.EdgeRejectedException;
 import org.graphstream.graph.Graph;
 import org.graphstream.graph.Node;
 import org.graphstream.graph.implementations.SingleGraph;
@@ -41,6 +40,7 @@ public class NodeData2JSGraphConverter {
 		graph.addSink(layout);
 		graph.setStrict(true);
 		layout.addAttributeSink(graph);
+
 		BetweennessCentrality bcb = new BetweennessCentrality();
 		long id=0;
 		for(Entry<String, NodeDataPair> nodeEntry:nodes.entrySet()) {
@@ -81,14 +81,16 @@ public class NodeData2JSGraphConverter {
 				if(graph.getEdge(edgeId)!=null) {
 					continue;
 				}
-				graph.addEdge(edgeId , ndp.getId()+"", toId+"");
+				Edge e = graph.addEdge(edgeId , ndp.getId()+"", toId+"");
+				e.setAttribute("layout.weight", 5);
 				System.out.println("added adge:"+edgeId);
 			} else {
 				String reversedEdgeId = toId+"-"+ndp.getId();
 				if(graph.getEdge(reversedEdgeId)!=null) {
 					continue;
 				}
-				graph.addEdge(reversedEdgeId , toId+"", ndp.getId()+"");
+				Edge e = graph.addEdge(reversedEdgeId , toId+"", ndp.getId()+"");
+				e.setAttribute("layout.weight", 5);
 				System.out.println("added adge:"+reversedEdgeId);
 			}
 			
@@ -142,6 +144,7 @@ public class NodeData2JSGraphConverter {
 			Iterator<Node> nodeIt = graph.iterator();
 			while(nodeIt.hasNext()) {
 				Node node = nodeIt.next();
+				node.setAttribute("layout.weight", 200);
 				Object ip = node.getAttribute("ip");
 				if(ip==null) {
 					ip=":";
@@ -176,6 +179,7 @@ public class NodeData2JSGraphConverter {
 			writer.append(String.format(generated, new Date().getTime()));
 			writer.append(String.format(nodesNumber, graph.getNodeCount()));
 			writer.append(String.format(linksNumber, graph.getEdgeCount()));
+			//graph.display(true);
 		}
 		
 	}
