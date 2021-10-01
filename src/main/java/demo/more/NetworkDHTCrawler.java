@@ -135,6 +135,28 @@ public class NetworkDHTCrawler {
 					}
 				}
 				
+				String selfInfo = new ApiRequest().getSelf(targetNodeKey).serialize();
+				String selfInfoObject = socketRequest(selfInfo);
+				
+				ApiSelfResponse selfInfoReponse = null;
+				try {
+					selfInfoReponse = gson.fromJson(selfInfoObject, ApiSelfResponse.class);
+				} catch (JsonSyntaxException e) {
+					e.printStackTrace();
+					System.err.println("error response:\n" + selfInfoObject);
+					return null;
+				}
+				if (selfInfoReponse != null && !selfInfoReponse.getResponse().isEmpty()) {
+					if(selfInfoReponse.getStatus().equals("error")){
+						System.out.println("error");
+						return null;
+					}
+					Entry<String, Map<String, Object>> selfNodeInfo = selfInfoReponse.getResponse().entrySet().iterator().next();
+					String coords = selfNodeInfo.getValue().get("coords").toString();
+					String coordsString = coords.substring(1, coords.length()-1);
+					ndp.setCoords(coordsString);
+				}
+				
 				nodes.put(targetNodeKey, ndp);
 				List<String> peerKeys = peer.getValue().get("keys");
 				ConcurrentLinkedQueue<Future<String>> tasks = new ConcurrentLinkedQueue<Future<String>>();
@@ -241,7 +263,8 @@ public class NetworkDHTCrawler {
 
 		try {
 			System.out.println("Nodes:" + nodes.size() + " Links:" + links.size());
-			NodeData2JSGraphConverter.createJs(nodes, links, dataPath);
+			NodeData2JSGraphConverter.createPeerGraphJs(nodes, links, dataPath);
+			//NodeData2JSGraphConverter.createSpanningTreeGraphJs(nodes, links, dataPath);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
