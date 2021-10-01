@@ -21,7 +21,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,25 +41,28 @@ public class NetworkDHTCrawler {
 	
 	private static final Logger log = LoggerFactory.getLogger(NetworkDHTCrawler.class);
 	
-	private static final String KEY_API_HOST = "323e321939b1b08e06b89b0ed8c57b09757f2974eba218887fdd68a45024d4c1";
+	private static final String KEY_API_HOST = "11dbeb74048638c9532077a9b19b20cd5a8bf6f44312a1e8ba7d791e303f8e29";
 
-	private static final String ADMIN_API_HOST = "localhost";
-	private static final int ADMIN_API_PORT = 9001;
+	private static final String ADMIN_API_HOST = "192.168.1.106";
+	private static final int ADMIN_API_PORT = 9002;
 
 	private static SortedMap<String, NodeDataPair> nodes; // node key, ip nodes
 	private static SortedSet<Link> links; // node key, ip links
-
 	public static Gson gson = new Gson();
+	
+	final static ExecutorService threadPool = Executors.newWorkStealingPool(10);
 
 	private Future<String> run(String targetNodeKey, Class<ApiResponse> class_) {
 		
-		final ExecutorService threadPool = Executors.newFixedThreadPool(1);
-
 		Future<String> future = threadPool.submit(new Callable<String>() {
+			
+			//ExecutorService threadTaskPool = Executors.newFixedThreadPool(1);
 
 			@Override
 			public String call() throws Exception {
-				ExecutorService threadTaskPool = Executors.newFixedThreadPool(2);
+
+				//threadTaskPool.awaitTermination(1000, TimeUnit.MILLISECONDS);
+				
 				log.info("found: " + nodes.size() + " records");
 				if (NetworkDHTCrawler.nodes.get(targetNodeKey) != null) {
 					return null;
@@ -68,8 +70,8 @@ public class NetworkDHTCrawler {
 					nodes.put(targetNodeKey, new NodeDataPair(null, null));
 				}
 				final String json = new ApiRequest().getPeers(targetNodeKey).serialize();
-				Future<String> o = threadTaskPool.submit(apiRequest(json));
-				String object = o.get(5000, TimeUnit.MILLISECONDS);
+				
+				String object = socketRequest(json);
 				if (object == null) {
 					return null;
 				}
@@ -99,9 +101,7 @@ public class NetworkDHTCrawler {
 				NodeDataPair ndp = new NodeDataPair(peer.getKey(), targetNodeKey);
 				
 				String nodeInfo = new ApiRequest().getNodeInfo(targetNodeKey).serialize();
-				Future<String> nodeInfoO = threadTaskPool.submit(apiRequest(nodeInfo));
-				String nodeInfoObject = nodeInfoO.get(5000, TimeUnit.MILLISECONDS);
-				threadTaskPool.shutdown();
+				String nodeInfoObject = socketRequest(nodeInfo);
 				
 				ApiNodeInfoResponse nodeInfoReponse = null;
 				try {
@@ -144,7 +144,7 @@ public class NetworkDHTCrawler {
 					if (NetworkDHTCrawler.nodes.get(peerKey) != null) {
 						continue;
 					}
-					Thread.sleep(1000);
+					//Thread.sleep(1000);
 					tasks.add(NetworkDHTCrawler.this.run(peerKey, class_));
 					System.out.println("Total links:" + links.size());
 				}
@@ -155,7 +155,6 @@ public class NetworkDHTCrawler {
 						e.printStackTrace();
 					}
 				}
-				threadPool.shutdownNow();
 				return gson.toJson(apiPeerResponse);
 			}
 		});
@@ -163,57 +162,57 @@ public class NetworkDHTCrawler {
 		return future;
 	}
 
-	private Callable<String> apiRequest(String json) {
-		
-		return new Callable<String>() {
-			@Override
-			public String call() throws Exception {
-				String response = null;
-				byte[] cbuf = new byte[1024*64];
-				Socket clientSocket = null;
-				DataOutputStream os = null;
-				InputStream is = null;
-				StringBuilder sb = new StringBuilder();
+	private String socketRequest(String json) throws IOException {
+		String response = null;
+		byte[] cbuf = new byte[1024*64];
+		Socket clientSocket = null;
+		DataOutputStream os = null;
+		InputStream is = null;
+		StringBuilder sb = new StringBuilder();
+		try {
+			clientSocket = new Socket(ADMIN_API_HOST, ADMIN_API_PORT);
+			os = new DataOutputStream(clientSocket.getOutputStream());
+			os.writeBytes(json);
+			//System.out.println("Total nodes:" + NetworkDHTCrawler.nodes.size());
+			int i = 0;
+			is = clientSocket.getInputStream();
+			i = is.read(cbuf);
+			sb.append(new String(Arrays.copyOf(cbuf, i)));
+			response = sb.toString();
+			System.out.println("Request:\n"+json+"\n"+"Response:\n"+response);
+			boolean exception=false;
+			do {
 				try {
-					clientSocket = new Socket(ADMIN_API_HOST, ADMIN_API_PORT);
-					os = new DataOutputStream(clientSocket.getOutputStream());
-					os.writeBytes(json);
-					//System.out.println("Total nodes:" + NetworkDHTCrawler.nodes.size());
-					int i = 0;
-					is = clientSocket.getInputStream();
+					gson.fromJson(response, ApiResponse.class);
+				} catch (JsonSyntaxException e) {
+					exception = true;
+					e.printStackTrace();
 					i = is.read(cbuf);
 					sb.append(new String(Arrays.copyOf(cbuf, i)));
 					response = sb.toString();
-					System.out.println("Request:\n"+json+"\n"+"Response:\n"+response);
-					boolean exception=false;
-					do {
-						try {
-							gson.fromJson(response, ApiResponse.class);
-						} catch (JsonSyntaxException e) {
-							exception = true;
-							e.printStackTrace();
-							i = is.read(cbuf);
-							sb.append(new String(Arrays.copyOf(cbuf, i)));
-							response = sb.toString();
-							continue;
-						}
-						exception = false;
-					} while(exception);
-				} catch (java.net.SocketException e) {
-					e.printStackTrace();
-					return null;
-				} catch (Exception e) {
-					e.printStackTrace();
-					return null;
-				} finally {
-					os.close();
-					is.close();
-					clientSocket.close();
+					continue;
 				}
-				
-				return response;
+				exception = false;
+			} while(exception);
+		} catch (java.net.ConnectException e) {
+			e.printStackTrace();
+		} catch (java.net.SocketException e) {
+			e.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			if(os!=null) {
+				os.close();
 			}
-		};
+			if(is!=null) {
+				is.close();
+			}
+			if(clientSocket!=null) {
+				clientSocket.close();
+			}
+		}
+		
+		return response;
 	}
 
 	public static void run(String dataPath)
@@ -226,6 +225,7 @@ public class NetworkDHTCrawler {
 
 		Future<String> future = crawler.run(KEY_API_HOST, ApiResponse.class);
 		future.get();
+		threadPool.shutdownNow();
 		/*
 		 * history part long timestamp = new Date().getTime(); new File(dataPath,
 		 * "nodes.json").renameTo(new File(MAP_HISTORY_PATH,
