@@ -35,7 +35,7 @@ public class NodeData2JSGraphConverter {
 	
 	public static void createJs(Map<String, NodeDataPair> nodes, Set<Link> links, String dataPath) throws IOException, ClassNotFoundException {
 		
-		Graph graph = new SingleGraph("RiV-mesh network");
+		Graph graph = new SingleGraph("Yggdrasil network");
 		Layout layout = new SpringBox(true, new Random(100001));
 		graph.addSink(layout);
 		graph.setStrict(true);
