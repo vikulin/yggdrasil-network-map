@@ -5,7 +5,7 @@ public class NodeDataPair {
 	private Long id;
 	private String ip;
 	private String key;
-	
+	private String coords;
 	private String arch;
 	private String version;
 	private String platform;
@@ -39,6 +39,14 @@ public class NodeDataPair {
 
 	public void setId(Long id) {
 		this.id = id;
+	}
+
+	public String getCoords() {
+		return coords;
+	}
+
+	public void setCoords(String coords) {
+		this.coords = coords;
 	}
 
 	public String getArch() {

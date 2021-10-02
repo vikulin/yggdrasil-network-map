@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -18,6 +20,7 @@ import java.util.stream.Collectors;
 
 import org.graphstream.algorithm.BetweennessCentrality;
 import org.graphstream.graph.Edge;
+import org.graphstream.graph.ElementNotFoundException;
 import org.graphstream.graph.Graph;
 import org.graphstream.graph.Node;
 import org.graphstream.graph.implementations.SingleGraph;
@@ -33,7 +36,7 @@ import demo.node.NodeDataPair;
  */
 public class NodeData2JSGraphConverter {
 	
-	public static void createJs(Map<String, NodeDataPair> nodes, Set<Link> links, String dataPath) throws IOException, ClassNotFoundException {
+	public static void createPeerGraphJs(Map<String, NodeDataPair> nodes, Set<Link> links, String dataPath) throws IOException, ClassNotFoundException {
 		
 		Graph graph = new SingleGraph("RiV-mesh network");
 		Layout layout = new SpringBox(false, new Random(100001));
@@ -55,6 +58,7 @@ public class NodeData2JSGraphConverter {
 			}
 			node.setAttribute("ip", ip);
 			node.setAttribute("key", nodeEntry.getKey());
+			node.setAttribute("coords", nodeEntry.getValue().getCoords());
 			node.setAttribute("os", nodeEntry.getValue().getPlatform());
 			node.setAttribute("arch", nodeEntry.getValue().getArch());
 			node.setAttribute("version", nodeEntry.getValue().getVersion());
@@ -112,7 +116,6 @@ public class NodeData2JSGraphConverter {
 		    layout.compute();
 		}
 		
-
 		String preTitle = "function preTitle(text) {\r\n"
 				+ "		  const container = document.createElement(\"pre\");\r\n"
 				+ "		  container.innerText = text;\r\n"
@@ -129,7 +132,7 @@ public class NodeData2JSGraphConverter {
 		String linksNumber = "var linksNumber = %d;";
 		float width = 0.7f;
 		int edgesCount = graph.getEdgeCount();	
-		try (Writer writer = new FileWriter(new File(dataPath,"graph-data.js"))) {
+		try (Writer writer = new FileWriter(new File(dataPath,"graph-peer-data.js"))) {
 			//writer.append(preTitle);
 			writer.append(beginEdges);
 			for(int index = 0; index < edgesCount; index++) {
@@ -180,6 +183,168 @@ public class NodeData2JSGraphConverter {
 			writer.append(String.format(nodesNumber, graph.getNodeCount()));
 			writer.append(String.format(linksNumber, graph.getEdgeCount()));
 			//graph.display(true);
+		}	
+	}
+	
+public static void createSpanningTreeGraphJs(Map<String, NodeDataPair> nodes, String dataPath) throws IOException, ClassNotFoundException {
+		
+		Set<NodeDataPair> unknownNodes = new HashSet<NodeDataPair>();
+
+		Map<String, Long> idByCoordinates = new HashMap<String, Long>();
+		Long unknownIdStartFrom = Long.valueOf(nodes.size()+100);
+		
+		Graph graph = new SingleGraph("Yggdrasil network");
+		Layout layout = new SpringBox(false);
+		graph.addSink(layout);
+		layout.addAttributeSink(graph);
+		BetweennessCentrality bcb = new BetweennessCentrality();
+		
+		for(Entry<String, NodeDataPair> nodeEntry:nodes.entrySet()) {
+			String coords = nodeEntry.getValue().getCoords();
+			idByCoordinates.put(coords, nodeEntry.getValue().getId());
+		}
+		for(Entry<String, NodeDataPair> nodeEntry:nodes.entrySet()) {
+			String coords = nodeEntry.getValue().getCoords();
+			if(coords==null || coords.equals("")) {
+				continue;
+			}
+			int index = coords.lastIndexOf(' ');
+			if(index<0) {
+				continue;
+			}
+			String from = coords.substring(0, index);
+			
+			String[] array = from.split(" ");
+			List<String> list = Arrays.asList(array);
+			try {
+				for(int i=0;i<list.size();i++) {
+					String parentCoords = list.subList(0, list.size()-i).stream().collect(Collectors.joining(" "));
+					Long idFrom = idByCoordinates.get(parentCoords);
+					//skip null. it occurs when parent coords are unknown
+					if(idFrom==null) {
+						//special condition for unknown parent nodes
+						String recoverCoords = "["+parentCoords+"]";
+						NodeDataPair nodeDataPair = new NodeDataPair("?", "?");
+						nodeDataPair.setId(unknownIdStartFrom);
+						idByCoordinates.put(parentCoords, unknownIdStartFrom);
+						unknownNodes.add(nodeDataPair);
+						unknownIdStartFrom++;
+					}
+				}
+			} catch (Exception e) {
+				System.out.println("from:"+from);
+				e.printStackTrace();
+			}
+		}
+		for(NodeDataPair n:unknownNodes) {
+			nodes.put(n.getId()+"?", n);
+		}
+		for(Entry<String, NodeDataPair> nodeEntry:nodes.entrySet()) {
+			Node node = graph.addNode(nodeEntry.getValue().getId().toString());
+			node.setAttribute("layout.weight", 50);
+		}
+		for(Entry<String, NodeDataPair> nodeEntry:nodes.entrySet()) {
+			String coords = nodeEntry.getValue().getCoords();
+			if(coords==null || coords.equals("")) {
+				continue;
+			}
+			int index = coords.lastIndexOf(' ');
+			if(index<0) {
+				String fromId = idByCoordinates.get("").toString();
+				String toId =  idByCoordinates.get(coords).toString();
+				graph.addEdge(fromId+"-"+toId, fromId, toId);
+				continue;
+			}
+			
+			String from = coords.substring(0, index);
+			Long idFrom = idByCoordinates.get(from);
+			//skip null. it occurs when parent coords are unknown
+			if(idFrom!=null) {
+				String fromId = idFrom.toString();
+				String toId =  idByCoordinates.get(coords).toString();
+				String edgeId = fromId+"-"+toId;
+				if(graph.getEdge(edgeId)==null) {
+					try {
+						Edge e = graph.addEdge(edgeId, fromId, toId);
+						e.setAttribute("layout.weight", 3);
+					} catch (ElementNotFoundException e) {
+						e.printStackTrace();
+						System.out.println("fromId="+fromId+" toId="+toId);
+					}
+				}
+			}
+		}
+		bcb.init(graph);
+		bcb.compute();
+		
+		layout.setQuality(0.99d);
+
+		// iterate the compute() method a number of times
+		while(layout.getStabilization() < 0.93){
+		    layout.compute();
+		}
+		  
+		StringBuilder nodesSb = new StringBuilder();
+		StringBuilder edgesSb = new StringBuilder();
+		String beginNodes = "var nodes = [\n";
+		String rowNodes = "{id: %d, label: \"%s\", title: \"%s\", value: %d, group: %d, x: %.2f, y: %.2f},\n";
+		String rowEdges = "{from: %d, to: %d, value: %d},\n";
+		String endNodes = "];\n";
+		String beginEdges = "var edges = [\n";
+		String endEdges = "];\n";
+		String generated = "var generated = %d;\n";
+		String nodesNumber = "var nodesNumber = %d;\n";
+		String linksNumber = "var linksNumber = %d;";
+		nodesSb.append(beginNodes);
+		edgesSb.append(beginEdges);
+		
+		for(Entry<String, NodeDataPair> nodeEntry:nodes.entrySet()) {
+			String coords = nodeEntry.getValue().getCoords();
+			if(coords==null) {
+				continue;
+			}
+			int group = 0;
+			if(!coords.equals("")) {
+				group = coords.split(" ").length;
+			}
+			long value = Double.valueOf(graph.getNode(nodeEntry.getValue().getId().toString()).getAttribute("Cb").toString()).longValue()+5;
+			double[] coordinates = GraphPosLengthUtils.nodePosition(graph, nodeEntry.getValue().getId().toString());
+			String ip = nodeEntry.getValue().getIp();
+			String label = "";
+			if(nodeEntry.getValue().getName()!=null) {
+				label = nodeEntry.getValue().getName();
+			} else {
+				label = ip.toString().substring(ip.toString().lastIndexOf(':') + 1);
+			}
+			
+			nodesSb.append(String.format(Locale.ROOT, rowNodes, nodeEntry.getValue().getId(), label, ip, value, group, 120*coordinates[0], 120*coordinates[1]));
+
+			if(coords.equals("")) {
+				continue;
+			}
+			int index = coords.lastIndexOf(' ');
+			if(index<0) {
+				edgesSb.append(String.format(rowEdges, idByCoordinates.get(""), idByCoordinates.get(coords), value));
+				continue;
+			}
+			
+			String from = coords.substring(0, index);
+			Long idFrom = idByCoordinates.get(from);
+			//skip null. it occurs when parent coords are unknown
+			if(idFrom!=null) {
+				edgesSb.append(String.format(rowEdges, idFrom, idByCoordinates.get(coords), value));
+			}
+		}
+		
+		nodesSb.append(endNodes);
+		edgesSb.append(endEdges);
+		
+		try (Writer writer = new FileWriter(new File(dataPath,"graph-tree-data.js"))) {
+			writer.append(nodesSb.toString());
+			writer.append(edgesSb.toString());
+			writer.append(String.format(generated, new Date().getTime()));
+			writer.append(String.format(nodesNumber, graph.getNodeCount()));
+			writer.append(String.format(linksNumber, graph.getEdgeCount()));
 		}
 		
 	}

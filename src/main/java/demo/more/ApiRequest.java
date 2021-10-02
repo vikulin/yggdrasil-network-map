@@ -30,6 +30,13 @@ public class ApiRequest {
 		return this;
 	}
 	
+	public ApiRequest getSelf(String key){
+		map.put("request", "debug_remotegetself");
+		map.put("key", key);
+		map.put("keepalive", true);
+		return this;
+	}
+	
 	public String serialize() {
 		Gson gson = new Gson();
 		return gson.toJson(map);
