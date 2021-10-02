@@ -50,7 +50,7 @@ public class NetworkDHTCrawler {
 	private static SortedSet<Link> links; // node key, ip links
 	public static Gson gson = new Gson();
 	
-	final static ExecutorService threadPool = Executors.newWorkStealingPool(12);
+	private static ExecutorService threadPool = null;
 
 	private Future<String> runTask(String targetNodeKey) {
 		
@@ -77,7 +77,9 @@ public class NetworkDHTCrawler {
 					if(selfNodeInfo!=null) {
 						ip = selfNodeInfo.getKey();
 					} else {
-						ip = nodeInfoReponse.getKey();
+						if(nodeInfoReponse!=null) {
+							ip = nodeInfoReponse.getKey();
+						}
 					}
 				}
 				NodeDataPair ndp = nodes.get(targetNodeKey);//new NodeDataPair(ip, targetNodeKey);
@@ -111,6 +113,9 @@ public class NetworkDHTCrawler {
 				}
 				
 				//nodes.put(targetNodeKey, ndp);
+				if(peer==null) {
+					return null;
+				}
 				List<String> peerKeys = peer.getValue().get("keys");
 				ConcurrentLinkedQueue<Future<String>> tasks = new ConcurrentLinkedQueue<Future<String>>();
 				for (String peerKey : peerKeys) {
@@ -272,7 +277,7 @@ public class NetworkDHTCrawler {
 
 	public static void run(String dataPath)
 			throws InterruptedException, ExecutionException, IOException, ClassNotFoundException {
-		
+		threadPool = Executors.newWorkStealingPool(12);
 		nodes = new ConcurrentSkipListMap<String, NodeDataPair>();
 		links = new ConcurrentSkipListSet<Link>();
 
