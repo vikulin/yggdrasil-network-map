@@ -116,7 +116,6 @@ public class NodeData2JSGraphConverter {
 		    layout.compute();
 		}
 		
-
 		String preTitle = "function preTitle(text) {\r\n"
 				+ "		  const container = document.createElement(\"pre\");\r\n"
 				+ "		  container.innerText = text;\r\n"
@@ -133,7 +132,7 @@ public class NodeData2JSGraphConverter {
 		String linksNumber = "var linksNumber = %d;";
 		float width = 0.7f;
 		int edgesCount = graph.getEdgeCount();	
-		try (Writer writer = new FileWriter(new File(dataPath,"graph-data.js"))) {
+		try (Writer writer = new FileWriter(new File(dataPath,"graph-peer-data.js"))) {
 			//writer.append(preTitle);
 			writer.append(beginEdges);
 			for(int index = 0; index < edgesCount; index++) {
@@ -187,7 +186,7 @@ public class NodeData2JSGraphConverter {
 		}	
 	}
 	
-public static void createSpanningTreeGraphJs(Set<NodeDataPair> nodes, String dataPath) throws IOException, ClassNotFoundException {
+public static void createSpanningTreeGraphJs(Map<String, NodeDataPair> nodes, String dataPath) throws IOException, ClassNotFoundException {
 		
 		Set<NodeDataPair> unknownNodes = new HashSet<NodeDataPair>();
 
@@ -200,13 +199,13 @@ public static void createSpanningTreeGraphJs(Set<NodeDataPair> nodes, String dat
 		layout.addAttributeSink(graph);
 		BetweennessCentrality bcb = new BetweennessCentrality();
 		
-		for(NodeDataPair n:nodes) {
-			String coords = n.getCoords().substring(1, n.getCoords().length()-1);
-			idByCoordinates.put(coords, n.getId());
+		for(Entry<String, NodeDataPair> nodeEntry:nodes.entrySet()) {
+			String coords = nodeEntry.getValue().getCoords();
+			idByCoordinates.put(coords, nodeEntry.getValue().getId());
 		}
-		for(NodeDataPair n:nodes) {
-			String coords = n.getCoords().substring(1, n.getCoords().length()-1);
-			if(coords.equals("")) {
+		for(Entry<String, NodeDataPair> nodeEntry:nodes.entrySet()) {
+			String coords = nodeEntry.getValue().getCoords();
+			if(coords==null || coords.equals("")) {
 				continue;
 			}
 			int index = coords.lastIndexOf(' ');
@@ -237,13 +236,16 @@ public static void createSpanningTreeGraphJs(Set<NodeDataPair> nodes, String dat
 				e.printStackTrace();
 			}
 		}
-		nodes.addAll(unknownNodes);
-		for(NodeDataPair n:nodes) {
-			graph.addNode(n.getId().toString());
+		for(NodeDataPair n:unknownNodes) {
+			nodes.put(n.getId()+"?", n);
 		}
-		for(NodeDataPair n:nodes) {
-			String coords = n.getCoords().substring(1, n.getCoords().length()-1);
-			if(coords.equals("")) {
+		for(Entry<String, NodeDataPair> nodeEntry:nodes.entrySet()) {
+			Node node = graph.addNode(nodeEntry.getValue().getId().toString());
+			node.setAttribute("layout.weight", 50);
+		}
+		for(Entry<String, NodeDataPair> nodeEntry:nodes.entrySet()) {
+			String coords = nodeEntry.getValue().getCoords();
+			if(coords==null || coords.equals("")) {
 				continue;
 			}
 			int index = coords.lastIndexOf(' ');
@@ -263,7 +265,8 @@ public static void createSpanningTreeGraphJs(Set<NodeDataPair> nodes, String dat
 				String edgeId = fromId+"-"+toId;
 				if(graph.getEdge(edgeId)==null) {
 					try {
-						graph.addEdge(edgeId, fromId, toId);
+						Edge e = graph.addEdge(edgeId, fromId, toId);
+						e.setAttribute("layout.weight", 3);
 					} catch (ElementNotFoundException e) {
 						e.printStackTrace();
 						System.out.println("fromId="+fromId+" toId="+toId);
@@ -274,8 +277,10 @@ public static void createSpanningTreeGraphJs(Set<NodeDataPair> nodes, String dat
 		bcb.init(graph);
 		bcb.compute();
 		
+		layout.setQuality(0.99d);
+
 		// iterate the compute() method a number of times
-		while(layout.getStabilization() < 0.92){
+		while(layout.getStabilization() < 0.93){
 		    layout.compute();
 		}
 		  
@@ -293,15 +298,26 @@ public static void createSpanningTreeGraphJs(Set<NodeDataPair> nodes, String dat
 		nodesSb.append(beginNodes);
 		edgesSb.append(beginEdges);
 		
-		for(NodeDataPair n:nodes) {
-			String coords = n.getCoords().substring(1, n.getCoords().length()-1);
+		for(Entry<String, NodeDataPair> nodeEntry:nodes.entrySet()) {
+			String coords = nodeEntry.getValue().getCoords();
+			if(coords==null) {
+				continue;
+			}
 			int group = 0;
 			if(!coords.equals("")) {
 				group = coords.split(" ").length;
 			}
-			long value = Double.valueOf(graph.getNode(n.getId().toString()).getAttribute("Cb").toString()).longValue()+5;
-			double[] coordinates = GraphPosLengthUtils.nodePosition(graph, n.getId().toString());
-			nodesSb.append(String.format(Locale.ROOT, rowNodes, n.getId(), coords, n.getIp(), value, group, 100*coordinates[0], 100*coordinates[1]));
+			long value = Double.valueOf(graph.getNode(nodeEntry.getValue().getId().toString()).getAttribute("Cb").toString()).longValue()+5;
+			double[] coordinates = GraphPosLengthUtils.nodePosition(graph, nodeEntry.getValue().getId().toString());
+			String ip = nodeEntry.getValue().getIp();
+			String label = "";
+			if(nodeEntry.getValue().getName()!=null) {
+				label = nodeEntry.getValue().getName();
+			} else {
+				label = ip.toString().substring(ip.toString().lastIndexOf(':') + 1);
+			}
+			
+			nodesSb.append(String.format(Locale.ROOT, rowNodes, nodeEntry.getValue().getId(), label, ip, value, group, 120*coordinates[0], 120*coordinates[1]));
 
 			if(coords.equals("")) {
 				continue;
@@ -323,7 +339,7 @@ public static void createSpanningTreeGraphJs(Set<NodeDataPair> nodes, String dat
 		nodesSb.append(endNodes);
 		edgesSb.append(endEdges);
 		
-		try (Writer writer = new FileWriter(new File(dataPath,"graph-data.js"))) {
+		try (Writer writer = new FileWriter(new File(dataPath,"graph-tree-data.js"))) {
 			writer.append(nodesSb.toString());
 			writer.append(edgesSb.toString());
 			writer.append(String.format(generated, new Date().getTime()));

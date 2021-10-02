@@ -52,29 +52,44 @@ public class NetworkDHTCrawler {
 	
 	final static ExecutorService threadPool = Executors.newWorkStealingPool(12);
 
-	private Future<String> task(String targetNodeKey) {
+	private Future<String> runTask(String targetNodeKey) {
 		
 		Future<String> future = threadPool.submit(new Callable<String>() {
 			
 			@Override
 			public String call() throws Exception {
+				
+				log.info("found: " + nodes.size() + " records");
+				if (NetworkDHTCrawler.nodes.get(targetNodeKey) != null) {
+					return null;
+				} else {
+					nodes.put(targetNodeKey, new NodeDataPair(null, null));
+				}
 
 				Entry<String, Map<String, List<String>>> peer = getPeerInfo(targetNodeKey);
-				ApiNodeInfoResponse nodeInfoReponse = getNodeInfo(targetNodeKey);
+				Entry<String, Map<String, Object>> nodeInfoReponse = getNodeInfo(targetNodeKey);
 				Entry<String, Map<String, Object>> selfNodeInfo = getSelf(targetNodeKey);
 				
-				NodeDataPair ndp = new NodeDataPair(peer.getKey(), targetNodeKey);
-				
-				if (nodeInfoReponse != null && !nodeInfoReponse.getResponse().isEmpty()) {
-					if(nodeInfoReponse.getStatus().equals("error")){
-						System.out.println("error");
-						return null;
+				String ip = null;
+				if(peer!=null) {
+					ip = peer.getKey();
+				} else {
+					if(selfNodeInfo!=null) {
+						ip = selfNodeInfo.getKey();
+					} else {
+						ip = nodeInfoReponse.getKey();
 					}
-					Entry<String, Map<String, Object>> keysNodeInfo = nodeInfoReponse.getResponse().entrySet().iterator().next();
-					Object buildarch = keysNodeInfo.getValue().get("buildarch");
-					Object buildplatform = keysNodeInfo.getValue().get("buildplatform");
-					Object buildversion = keysNodeInfo.getValue().get("buildversion");
-					Object name = keysNodeInfo.getValue().get("name");
+				}
+				NodeDataPair ndp = nodes.get(targetNodeKey);//new NodeDataPair(ip, targetNodeKey);
+				ndp.setIp(ip);
+				ndp.setKey(targetNodeKey);
+				
+				if (nodeInfoReponse != null) {
+					
+					Object buildarch = nodeInfoReponse.getValue().get("buildarch");
+					Object buildplatform = nodeInfoReponse.getValue().get("buildplatform");
+					Object buildversion = nodeInfoReponse.getValue().get("buildversion");
+					Object name = nodeInfoReponse.getValue().get("name");
 					if (buildarch != null) {
 						ndp.setArch(buildarch.toString());
 					}
@@ -89,13 +104,13 @@ public class NetworkDHTCrawler {
 					}
 				}
 				
+				if(selfNodeInfo!=null) {
+					String coords = selfNodeInfo.getValue().get("coords").toString();
+					String coordsString = coords.substring(1, coords.length()-1);
+					ndp.setCoords(coordsString);
+				}
 				
-				
-				String coords = selfNodeInfo.getValue().get("coords").toString();
-				String coordsString = coords.substring(1, coords.length()-1);
-				ndp.setCoords(coordsString);
-				
-				nodes.put(targetNodeKey, ndp);
+				//nodes.put(targetNodeKey, ndp);
 				List<String> peerKeys = peer.getValue().get("keys");
 				ConcurrentLinkedQueue<Future<String>> tasks = new ConcurrentLinkedQueue<Future<String>>();
 				for (String peerKey : peerKeys) {
@@ -105,7 +120,7 @@ public class NetworkDHTCrawler {
 						continue;
 					}
 					//Thread.sleep(1000);
-					tasks.add(NetworkDHTCrawler.this.task(peerKey));
+					tasks.add(NetworkDHTCrawler.this.runTask(peerKey));
 					System.out.println("Total links:" + links.size());
 				}
 				for(Future<String> task: tasks) {
@@ -145,7 +160,7 @@ public class NetworkDHTCrawler {
 		return selfNodeInfo;
 	}
 	
-	private ApiNodeInfoResponse getNodeInfo(String targetNodeKey) throws IOException {
+	private Entry<String, Map<String, Object>> getNodeInfo(String targetNodeKey) throws IOException {
 		String nodeInfo = new ApiRequest().getNodeInfo(targetNodeKey).serialize();
 		String nodeInfoObject = socketRequest(nodeInfo);
 		
@@ -157,16 +172,19 @@ public class NetworkDHTCrawler {
 			System.err.println("error response:\n" + nodeInfoObject);
 			return null;
 		}
-		return nodeInfoReponse;
+		
+		if (nodeInfoReponse != null && !nodeInfoReponse.getResponse().isEmpty()) {
+			if(nodeInfoReponse.getStatus().equals("error")){
+				System.out.println("error");
+				return null;
+			}
+			return nodeInfoReponse.getResponse().entrySet().iterator().next();
+		}
+		return null;
 	}
 	
 	private Entry<String, Map<String, List<String>>> getPeerInfo(String targetNodeKey) throws IOException {
-		log.info("found: " + nodes.size() + " records");
-		if (NetworkDHTCrawler.nodes.get(targetNodeKey) != null) {
-			return null;
-		} else {
-			nodes.put(targetNodeKey, new NodeDataPair(null, null));
-		}
+
 		final String json = new ApiRequest().getPeers(targetNodeKey).serialize();
 		
 		String object = socketRequest(json);
@@ -210,7 +228,7 @@ public class NetworkDHTCrawler {
 			clientSocket = new Socket(ADMIN_API_HOST, ADMIN_API_PORT);
 			os = new DataOutputStream(clientSocket.getOutputStream());
 			os.writeBytes(json);
-			//System.out.println("Total nodes:" + NetworkDHTCrawler.nodes.size());
+			System.out.println("Total nodes:" + NetworkDHTCrawler.nodes.size());
 			int i = 0;
 			is = clientSocket.getInputStream();
 			i = is.read(cbuf);
@@ -260,7 +278,7 @@ public class NetworkDHTCrawler {
 
 		NetworkDHTCrawler crawler = new NetworkDHTCrawler();
 
-		Future<String> future = crawler.task(KEY_API_HOST);
+		Future<String> future = crawler.runTask(KEY_API_HOST);
 		future.get();
 		threadPool.shutdownNow();
 		/*
@@ -279,7 +297,7 @@ public class NetworkDHTCrawler {
 		try {
 			System.out.println("Nodes:" + nodes.size() + " Links:" + links.size());
 			NodeData2JSGraphConverter.createPeerGraphJs(nodes, links, dataPath);
-			//NodeData2JSGraphConverter.createSpanningTreeGraphJs(nodes, links, dataPath);
+			NodeData2JSGraphConverter.createSpanningTreeGraphJs(nodes, dataPath);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
