@@ -15,18 +15,18 @@ public class ScheduleYggdrasilNetworkMapListener implements ServletContextListen
 	
 	 	@Override
 		public void contextInitialized(ServletContextEvent arg0) {
-	 		ScheduledExecutorService ses = Executors.newScheduledThreadPool(1);
+	 		ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor();
 	 		final String dataPath = arg0.getServletContext().getRealPath("/data");
 	 		System.out.println("saved data in:"+dataPath);
-		 	Runnable task2 = () -> {
+		 	Runnable task = () -> {
 				try {
 					demo.more.NetworkDHTCrawler.run(dataPath);
 				} catch (ClassNotFoundException | InterruptedException | ExecutionException | IOException e) {
 					e.printStackTrace();
 				}
 			};
-			ses.scheduleAtFixedRate(task2, 30, 3600, TimeUnit.SECONDS);
-			arg0.getServletContext().setAttribute ("timer", ses);
+			ses.scheduleAtFixedRate(task, 30, 60, TimeUnit.SECONDS);
+			arg0.getServletContext().setAttribute("timer", ses);
 		}
 
 	    @Override
