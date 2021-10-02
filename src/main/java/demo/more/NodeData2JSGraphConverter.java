@@ -193,8 +193,8 @@ public static void createSpanningTreeGraphJs(Map<String, NodeDataPair> nodes, St
 		Map<String, Long> idByCoordinates = new HashMap<String, Long>();
 		Long unknownIdStartFrom = Long.valueOf(nodes.size()+100);
 		
-		Graph graph = new SingleGraph("Yggdrasil network");
-		Layout layout = new SpringBox(false);
+		Graph graph = new SingleGraph("RiV-mesh network");
+		Layout layout = new SpringBox(false, new Random(100001));
 		graph.addSink(layout);
 		layout.addAttributeSink(graph);
 		BetweennessCentrality bcb = new BetweennessCentrality();
