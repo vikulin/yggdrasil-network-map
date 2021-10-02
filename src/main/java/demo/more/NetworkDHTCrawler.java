@@ -117,6 +117,10 @@ public class NetworkDHTCrawler {
 					return null;
 				}
 				List<String> peerKeys = peer.getValue().get("keys");
+				if(peerKeys==null) {
+					System.err.println(peer.getKey()+" returned no peers");
+					return null;
+				}
 				ConcurrentLinkedQueue<Future<String>> tasks = new ConcurrentLinkedQueue<Future<String>>();
 				for (String peerKey : peerKeys) {
 					links.add(new Link(peerKey, targetNodeKey));
