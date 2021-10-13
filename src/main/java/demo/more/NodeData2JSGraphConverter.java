@@ -38,7 +38,7 @@ public class NodeData2JSGraphConverter {
 	
 	public static void createPeerGraphJs(Map<String, NodeDataPair> nodes, Set<Link> links, String dataPath) throws IOException, ClassNotFoundException {
 		
-		Graph graph = new SingleGraph("Yggdrasil network");
+		Graph graph = new SingleGraph("RiV-mesh network");
 		Layout layout = new SpringBox(false, new Random(100001));
 		graph.addSink(layout);
 		graph.setStrict(true);
@@ -63,6 +63,7 @@ public class NodeData2JSGraphConverter {
 			node.setAttribute("arch", nodeEntry.getValue().getArch());
 			node.setAttribute("version", nodeEntry.getValue().getVersion());
 			node.setAttribute("name", nodeEntry.getValue().getName());
+			node.setAttribute("icon", nodeEntry.getValue().getIcon());
 		}
 		for(Link l:links) {
 			String keyFrom = l.getKeyFrom();
@@ -204,7 +205,7 @@ public static void createSpanningTreeGraphJs(Map<String, NodeDataPair> nodes, St
 		Map<String, Long> idByCoordinates = new HashMap<String, Long>();
 		Long unknownIdStartFrom = Long.valueOf(nodes.size()+100);
 		
-		Graph graph = new SingleGraph("Yggdrasil network");
+		Graph graph = new SingleGraph("RiV-mesh network");
 		Layout layout = new SpringBox(false, new Random(100001));
 		graph.addSink(layout);
 		layout.addAttributeSink(graph);
