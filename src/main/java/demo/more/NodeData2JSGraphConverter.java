@@ -186,7 +186,8 @@ public class NodeData2JSGraphConverter {
 					if(icon==null) {
 						writer.append(String.format(Locale.ROOT, rowNodes, node.getId(), name, title, value, group, 100*coordinates[0], 100*coordinates[1]));
 					} else {
-						writer.append(String.format(Locale.ROOT, rowNodesIcons, node.getId(), name, title, value, group, 100*coordinates[0], 100*coordinates[1], icon));
+						String str = String.format(Locale.ROOT, rowNodesIcons, node.getId(), name, title, value, group, 100*coordinates[0], 100*coordinates[1], icon);
+						writer.append(str);
 					}
 				}
 			}
