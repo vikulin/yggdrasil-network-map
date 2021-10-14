@@ -43,7 +43,7 @@ public class NetworkDHTCrawler {
 	
 	private static final String KEY_API_HOST = "323e321939b1b08e06b89b0ed8c57b09757f2974eba218887fdd68a45024d4c1";
 
-	private static final String ADMIN_API_HOST = "172.16.0.121";
+	private static final String ADMIN_API_HOST = "localhost";
 	private static final int ADMIN_API_PORT = 9001;
 
 	private static SortedMap<String, NodeDataPair> nodes; // node key, ip nodes
