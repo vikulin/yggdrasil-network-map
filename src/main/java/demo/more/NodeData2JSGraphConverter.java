@@ -63,6 +63,7 @@ public class NodeData2JSGraphConverter {
 			node.setAttribute("arch", nodeEntry.getValue().getArch());
 			node.setAttribute("version", nodeEntry.getValue().getVersion());
 			node.setAttribute("name", nodeEntry.getValue().getName());
+			node.setAttribute("icon", nodeEntry.getValue().getIcon());
 		}
 		for(Link l:links) {
 			String keyFrom = l.getKeyFrom();
@@ -185,7 +186,8 @@ public class NodeData2JSGraphConverter {
 					if(icon==null) {
 						writer.append(String.format(Locale.ROOT, rowNodes, node.getId(), name, title, value, group, 100*coordinates[0], 100*coordinates[1]));
 					} else {
-						writer.append(String.format(Locale.ROOT, rowNodesIcons, node.getId(), name, title, value, group, 100*coordinates[0], 100*coordinates[1], icon));
+						String str = String.format(Locale.ROOT, rowNodesIcons, node.getId(), name, title, value, group, 100*coordinates[0], 100*coordinates[1], icon);
+						writer.append(str);
 					}
 				}
 			}

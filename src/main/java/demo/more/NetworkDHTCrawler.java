@@ -43,7 +43,7 @@ public class NetworkDHTCrawler {
 	
 	private static final String KEY_API_HOST = "11dbeb74048638c9532077a9b19b20cd5a8bf6f44312a1e8ba7d791e303f8e29";
 
-	private static final String ADMIN_API_HOST = "192.168.1.106";
+	private static final String ADMIN_API_HOST = "localhost";
 	private static final int ADMIN_API_PORT = 9002;
 
 	private static SortedMap<String, NodeDataPair> nodes; // node key, ip nodes
@@ -92,6 +92,7 @@ public class NetworkDHTCrawler {
 					Object buildplatform = nodeInfoReponse.getValue().get("buildplatform");
 					Object buildversion = nodeInfoReponse.getValue().get("buildversion");
 					Object name = nodeInfoReponse.getValue().get("name");
+					Object icon = nodeInfoReponse.getValue().get("icon");
 					if (buildarch != null) {
 						ndp.setArch(buildarch.toString());
 					}
@@ -103,6 +104,9 @@ public class NetworkDHTCrawler {
 					}
 					if (name != null) {
 						ndp.setName(name.toString());
+					}
+					if (icon != null) {
+						ndp.setIcon(icon.toString());
 					}
 				}
 				
