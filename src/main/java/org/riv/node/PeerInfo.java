@@ -1,4 +1,4 @@
-package demo.node;
+package org.riv.node;
 
 public class PeerInfo {
 	

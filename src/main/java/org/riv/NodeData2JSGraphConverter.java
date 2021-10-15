@@ -1,4 +1,4 @@
-package demo.more;
+package org.riv;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -27,8 +27,8 @@ import org.graphstream.graph.implementations.SingleGraph;
 import org.graphstream.ui.graphicGraph.GraphPosLengthUtils;
 import org.graphstream.ui.layout.Layout;
 import org.graphstream.ui.layout.springbox.implementations.SpringBox;
-
-import demo.node.NodeDataPair;
+import org.riv.node.Link;
+import org.riv.node.NodeDataPair;
 
 /**
  * This call converts node data in json format in JS file ready for import to https://github.com/visjs/vis-network
@@ -38,7 +38,7 @@ public class NodeData2JSGraphConverter {
 	
 	public static void createPeerGraphJs(Map<String, NodeDataPair> nodes, Set<Link> links, String dataPath) throws IOException, ClassNotFoundException {
 		
-		Graph graph = new SingleGraph("Yggdrasil network");
+		Graph graph = new SingleGraph("RiV-mesh network");
 		Layout layout = new SpringBox(false, new Random(100001));
 		graph.addSink(layout);
 		graph.setStrict(true);
@@ -206,7 +206,7 @@ public static void createSpanningTreeGraphJs(Map<String, NodeDataPair> nodes, St
 		Map<String, Long> idByCoordinates = new HashMap<String, Long>();
 		Long unknownIdStartFrom = Long.valueOf(nodes.size()+100);
 		
-		Graph graph = new SingleGraph("Yggdrasil network");
+		Graph graph = new SingleGraph("RiV-mesh network");
 		Layout layout = new SpringBox(false, new Random(100001));
 		graph.addSink(layout);
 		layout.addAttributeSink(graph);

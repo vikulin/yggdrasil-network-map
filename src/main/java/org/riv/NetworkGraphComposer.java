@@ -1,4 +1,4 @@
-package demo.more;
+package org.riv;
 
 import org.zkoss.chart.Charts;
 import org.zkoss.chart.Series;

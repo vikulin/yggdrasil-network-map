@@ -20,8 +20,7 @@ import javax.servlet.ServletContextListener;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.TrueFileFilter;
-
-import demo.node.PeerInfo;
+import org.riv.node.PeerInfo;
 
 public class ScheduleYggdrasilPeerReaderListener implements ServletContextListener {
 	

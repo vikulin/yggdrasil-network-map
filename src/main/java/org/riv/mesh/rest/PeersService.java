@@ -10,10 +10,11 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import org.riv.node.PeerInfo;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import demo.node.PeerInfo;
 import listener.ScheduleYggdrasilPeerReaderListener;
 
 @Path("/peers.json")

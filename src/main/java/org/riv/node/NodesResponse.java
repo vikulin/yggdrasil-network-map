@@ -1,4 +1,4 @@
-package demo.more;
+package org.riv.node;
 
 import java.util.Map;
 

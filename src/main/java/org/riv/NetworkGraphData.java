@@ -1,4 +1,4 @@
-package demo.more;
+package org.riv;
 
 import org.zkoss.chart.model.DefaultFromToModel;
 import org.zkoss.chart.model.FromToModel;

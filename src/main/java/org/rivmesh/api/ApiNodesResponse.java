@@ -1,4 +1,6 @@
-package demo.more;
+package org.rivmesh.api;
+
+import org.riv.node.NodesResponse;
 
 public class ApiNodesResponse {
 	
