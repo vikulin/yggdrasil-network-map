@@ -1,8 +1,7 @@
-package demo.app;
+package org.riv.app;
 
 import org.glassfish.jersey.server.ResourceConfig;
-
-import demo.filter.CORSResponseFilter;
+import org.riv.filter.CORSResponseFilter;
 
 /**
  * Registers the components to be used by the JAX-RS application

@@ -1,4 +1,4 @@
-package demo.more;
+package org.riv;
 
 public class DHTData extends NodeData{
 		

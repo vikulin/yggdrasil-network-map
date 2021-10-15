@@ -1,4 +1,4 @@
-package demo.more;
+package org.riv;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -27,8 +27,7 @@ import org.graphstream.graph.implementations.SingleGraph;
 import org.graphstream.ui.graphicGraph.GraphPosLengthUtils;
 import org.graphstream.ui.layout.Layout;
 import org.graphstream.ui.layout.springbox.implementations.SpringBox;
-
-import demo.node.NodeDataPair;
+import org.riv.node.NodeDataPair;
 
 /**
  * This call converts node data in json format in JS file ready for import to https://github.com/visjs/vis-network

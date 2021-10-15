@@ -1,4 +1,4 @@
-package demo.filter;
+package org.riv.filter;
 
 
 import java.io.IOException;
