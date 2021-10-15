@@ -2,6 +2,8 @@ package org.riv;
 
 import java.util.Map;
 
+import org.riv.node.NodeData;
+
 public class DHTResponse {
 	
 	private Map<String, NodeData> dht;

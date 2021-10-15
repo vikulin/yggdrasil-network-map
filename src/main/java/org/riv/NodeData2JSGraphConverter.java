@@ -27,6 +27,7 @@ import org.graphstream.graph.implementations.SingleGraph;
 import org.graphstream.ui.graphicGraph.GraphPosLengthUtils;
 import org.graphstream.ui.layout.Layout;
 import org.graphstream.ui.layout.springbox.implementations.SpringBox;
+import org.riv.node.Link;
 import org.riv.node.NodeDataPair;
 
 /**

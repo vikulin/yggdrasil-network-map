@@ -1,4 +1,4 @@
-package org.riv;
+package org.riv.node;
 
 public class EdgeData {
 	

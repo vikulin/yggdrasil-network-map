@@ -1,6 +1,6 @@
 package org.rivmesh.api;
 
-import org.riv.NodesResponse;
+import org.riv.node.NodesResponse;
 
 public class ApiNodesResponse {
 	

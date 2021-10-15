@@ -1,4 +1,4 @@
-package org.riv;
+package org.riv.crawler;
 
 import java.io.DataOutputStream;
 import java.io.File;
@@ -22,6 +22,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import org.riv.NodeData2JSGraphConverter;
+import org.riv.node.Link;
 import org.riv.node.NodeDataPair;
 import org.rivmesh.api.ApiNodeInfoResponse;
 import org.rivmesh.api.ApiPeersResponse;
