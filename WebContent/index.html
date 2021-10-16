@@ -117,6 +117,24 @@
 			}
 		}
 		
+	</script>
+	<div id="mynetwork"></div>
+
+	<script type="text/javascript">
+		var network;
+		var allNodes;
+		var highlightActive = false;
+
+		var nodesDataset = new vis.DataSet(nodes);
+		var edgesDataset = new vis.DataSet(edges);
+		var deltaTime = (Math.floor((Date.now() - generated) / 1000))
+				.toString();
+		var mapInfo = document.getElementById("mapInfo");
+		mapInfo.innerHTML = mapInfo.innerHTML + '<br>Nodes:'
+				+ nodesNumber.toString() + '<br>Links:'
+				+ linksNumber.toString() + '<br>Generated:'
+				+ deltaTime.toHHMMSS() + ' ago';
+		
 		 var config = {
 			        dataSource: window.demo.data,
 			        canMoveFields: true, 
@@ -194,23 +212,7 @@
 			    
 			    var pgridwidget = new orb.pgridwidget(config);
 			    pgridwidget.render(versionInfo);
-	</script>
-	<div id="mynetwork"></div>
-
-	<script type="text/javascript">
-		var network;
-		var allNodes;
-		var highlightActive = false;
-
-		var nodesDataset = new vis.DataSet(nodes);
-		var edgesDataset = new vis.DataSet(edges);
-		var deltaTime = (Math.floor((Date.now() - generated) / 1000))
-				.toString();
-		var mapInfo = document.getElementById("mapInfo");
-		mapInfo.innerHTML = mapInfo.innerHTML + '<br>Nodes:'
-				+ nodesNumber.toString() + '<br>Links:'
-				+ linksNumber.toString() + '<br>Generated:'
-				+ deltaTime.toHHMMSS() + ' ago';
+		
 		
 		function redrawAll() {
 			var container = document.getElementById("mynetwork");
