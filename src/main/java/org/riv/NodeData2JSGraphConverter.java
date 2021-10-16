@@ -13,9 +13,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import org.graphstream.algorithm.BetweennessCentrality;
@@ -132,9 +134,29 @@ public class NodeData2JSGraphConverter {
 		String endEdges = "];\n";
 		String generated = "var generated = %d;\n";
 		String nodesNumber = "var nodesNumber = %d;\n";
-		String linksNumber = "var linksNumber = %d;";
-		float width = 0.7f;
-		int edgesCount = graph.getEdgeCount();	
+		String linksNumber = "var linksNumber = %d;\n";
+		
+		String versionMapStart = "(function() {\n"
+				+ "	window.demo = {};\n"
+				+ "	window.demo.data = [];\n"
+				+ "var data = getData();\n"
+				+ "for(var t=0;t<1;t++) {\n"
+				+ "for(var j = 0;j < data.length; j++) {\n"
+				+ "window.demo.data.push(data[j]);\n"
+				+ "}\n"
+				+ "}\n"
+				+ "function getData() {\n"
+				+ "return [\n";
+		//ip, name, version, os, arch
+		String versionMapValue = "['%s', '%s', '%s', '%s', '%s'],\n";
+		String versionMapEnd = "];\n"
+				+ "}\n"
+				+ "}());";
+		
+				float width = 0.7f;
+		int edgesCount = graph.getEdgeCount();
+		try (Writer statistic = new FileWriter(new File(dataPath,"statistic-peer-data.js"))) {
+			statistic.append(versionMapStart);
 		try (Writer writer = new FileWriter(new File(dataPath,"graph-peer-data.js"))) {
 			//writer.append(preTitle);
 			writer.append(beginEdges);
@@ -157,47 +179,50 @@ public class NodeData2JSGraphConverter {
 				}
 				Object os = node.getAttribute("os");
 				if(os==null) {
-					os="";
+					os="unknown";
 				}
 				Object arch = node.getAttribute("arch");
 				if(arch==null) {
-					arch="";
+					arch="unknown";
 				}
 				Object version = node.getAttribute("version");
 				if(version==null) {
-					version="";
+					version="unknown";
 				}
-				Object name = node.getAttribute("name");
-				Object icon = node.getAttribute("icon");
-
 				String label = ip.toString().substring(ip.toString().lastIndexOf(':') + 1);
+				Object name = node.getAttribute("name");
+				if(name==null) {
+					name=label;
+				}
+				Object icon = node.getAttribute("icon");
+				
+				//ip, name, version, os, arch
+				//String versionMapValue = "['%s', '%s', '%s', '%s', '%s'],\n";
+				statistic.append(String.format(Locale.ROOT, versionMapValue, ip, name, version, os, arch));
+				
 				long value = Double.valueOf(node.getAttribute("Cb").toString()).longValue()+5;
 				long group = value;
 				double[] coordinates = GraphPosLengthUtils.nodePosition(graph, node.getId());
 				//String title = ip+"\\n"+os+" "+arch+" "+version;
 				String title = ip.toString();
-				if(name==null) {
-					if(icon==null) {
-						writer.append(String.format(Locale.ROOT, rowNodes, node.getId(), label, title, value, group, 100*coordinates[0], 100*coordinates[1]));
-					} else {
-						writer.append(String.format(Locale.ROOT, rowNodesIcons, node.getId(), label, title, value, group, 100*coordinates[0], 100*coordinates[1], icon));
-					}
+				if(icon==null) {
+					writer.append(String.format(Locale.ROOT, rowNodes, node.getId(), name, title, value, group, 100*coordinates[0], 100*coordinates[1]));
 				} else {
-					if(icon==null) {
-						writer.append(String.format(Locale.ROOT, rowNodes, node.getId(), name, title, value, group, 100*coordinates[0], 100*coordinates[1]));
-					} else {
-						String str = String.format(Locale.ROOT, rowNodesIcons, node.getId(), name, title, value, group, 100*coordinates[0], 100*coordinates[1], icon);
-						writer.append(str);
-					}
+					String str = String.format(Locale.ROOT, rowNodesIcons, node.getId(), name, title, value, group, 100*coordinates[0], 100*coordinates[1], icon);
+					writer.append(str);
 				}
 			}
+			
+			statistic.append(versionMapEnd);
 			writer.append(endNodes);
 			writer.append(String.format(generated, new Date().getTime()));
 			writer.append(String.format(nodesNumber, graph.getNodeCount()));
 			writer.append(String.format(linksNumber, graph.getEdgeCount()));
 			//graph.display(true);
-		}	
+		}
 	}
+	
+}
 	
 public static void createSpanningTreeGraphJs(Map<String, NodeDataPair> nodes, String dataPath) throws IOException, ClassNotFoundException {
 		
