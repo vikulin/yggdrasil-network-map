@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Map.Entry;
 import java.util.SortedMap;
 import java.util.SortedSet;
@@ -38,19 +39,39 @@ import com.google.gson.JsonSyntaxException;
 
 public class NetworkDHTCrawler {
 	
+	private static Properties config = new Properties();
+	
 	static {
 		System.setProperty("org.graphstream.ui", "swing");
+		try {
+			config.load(Thread.currentThread().getContextClassLoader().getResourceAsStream("map.conf"));
+		} catch (IOException e) {
+			throw new ExceptionInInitializerError("Cannot load properties file.");
+		}
 	}
-
+	
+	public static String getKeyApiHost(){
+		return config.getProperty("KEY_API_HOST");
+	}
+	
+	public static String getAdminApiHost(){
+		return config.getProperty("ADMIN_API_HOST");
+	}
+	
+	public static String getAdminApiPort(){
+		return config.getProperty("ADMIN_API_PORT");
+	}
+	
 	private static final String MAP_HISTORY_PATH = "/opt/tomcat/yggdrasil-map-history";
 	//private static final String MAP_HISTORY_PATH = "C:\\Users\\Vadym\\git\\yggdrasil-network-map";
 	
 	private static final Logger log = LoggerFactory.getLogger(NetworkDHTCrawler.class);
 	
-	private static final String KEY_API_HOST = "11dbeb74048638c9532077a9b19b20cd5a8bf6f44312a1e8ba7d791e303f8e29";
+	private static final String KEY_API_HOST = getKeyApiHost();// "323e321939b1b08e06b89b0ed8c57b09757f2974eba218887fdd68a45024d4c1";
 
-	private static final String ADMIN_API_HOST = "localhost";
-	private static final int ADMIN_API_PORT = 9001;
+	private static final String ADMIN_API_HOST = getAdminApiHost();
+	
+	private static final int ADMIN_API_PORT = Integer.parseInt(getAdminApiPort());
 
 	private static SortedMap<String, NodeDataPair> nodes; // node key, ip nodes
 	private static SortedSet<Link> links; // node key, ip links

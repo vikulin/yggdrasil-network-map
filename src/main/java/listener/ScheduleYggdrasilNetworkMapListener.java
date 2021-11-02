@@ -1,6 +1,7 @@
 package listener;
 
 import java.io.IOException;
+import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -12,6 +13,25 @@ import javax.servlet.ServletContextListener;
 
 public class ScheduleYggdrasilNetworkMapListener implements ServletContextListener {
 	
+	private static Properties config = new Properties();
+	
+	static {
+		try {
+			config.load(Thread.currentThread().getContextClassLoader().getResourceAsStream("map.conf"));
+		} catch (IOException e) {
+			throw new ExceptionInInitializerError("Cannot load properties file.");
+		}
+	}
+	
+	public static Integer getPeriod(){
+		return Integer.parseInt(config.getProperty("period"));
+	}
+	
+	public static Integer getInitialDelay(){
+		return Integer.parseInt(config.getProperty("initial_delay"));
+	}
+	
+
 	
 	 	@Override
 		public void contextInitialized(ServletContextEvent arg0) {
@@ -25,8 +45,10 @@ public class ScheduleYggdrasilNetworkMapListener implements ServletContextListen
 					e.printStackTrace();
 				}
 			};
-			ses.scheduleAtFixedRate(task, 20, 3600, TimeUnit.SECONDS);
-			arg0.getServletContext().setAttribute("timer", ses);
+
+			ses.scheduleAtFixedRate(task, getInitialDelay(), getPeriod(), TimeUnit.SECONDS);
+
+      arg0.getServletContext().setAttribute("timer", ses);
 		}
 
 	    @Override

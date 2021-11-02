@@ -20,6 +20,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.graphstream.algorithm.BetweennessCentrality;
 import org.graphstream.graph.Edge;
 import org.graphstream.graph.ElementNotFoundException;
@@ -192,7 +193,9 @@ public class NodeData2JSGraphConverter {
 				String label = ip.toString().substring(ip.toString().lastIndexOf(':') + 1);
 				Object name = node.getAttribute("name");
 				if(name==null) {
-					name=label;
+					name=StringEscapeUtils.escapeEcmaScript(label);
+				} else {
+					name=StringEscapeUtils.escapeEcmaScript(name.toString());
 				}
 				Object icon = node.getAttribute("icon");
 				
