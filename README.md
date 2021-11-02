@@ -7,3 +7,4 @@
 
 1. run mvn install
 2. copy ROOT.war to tomcat webapps folder
+3. edit conf file ROOT\WEB-INF\classes\map.conf
