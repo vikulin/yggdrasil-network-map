@@ -36,7 +36,7 @@ public class ScheduleYggdrasilNetworkMapListener implements ServletContextListen
 	 	@Override
 		public void contextInitialized(ServletContextEvent arg0) {
 	 		ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor();
-	 		final String dataPath = arg0.getServletContext().getRealPath("/data");
+	 		final String dataPath = arg0.getServletContext().getRealPath("mesh/data");
 	 		System.out.println("saved data in:"+dataPath);
 		 	Runnable task = () -> {
 				try {

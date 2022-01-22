@@ -13,7 +13,7 @@ public class ClearnetRedirectServlet extends HttpServlet {
 		String remoteIp = req.getRemoteAddr();
 		if(remoteIp.startsWith("fc") || remoteIp.startsWith("fd")) {
 			System.out.println("RiV-mesh. IP:"+remoteIp);
-			resp.sendRedirect(req.getContextPath() + "/");
+			resp.sendRedirect(req.getContextPath() + "/mesh");
 			return;
 		}
         System.out.println("Redirection to clearnet page. IP:"+remoteIp);
