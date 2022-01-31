@@ -161,7 +161,7 @@ public class NetworkDHTCrawler {
 					}
 					//Thread.sleep(1000);
 					tasks.add(NetworkDHTCrawler.this.runTask(peerKey));
-					System.out.println("Total links:" + links.size());
+					//System.out.println("Total links:" + links.size());
 				}
 				for(Future<String> task: tasks) {
 					try {
@@ -268,7 +268,7 @@ public class NetworkDHTCrawler {
 			clientSocket = new Socket(ADMIN_API_HOST, ADMIN_API_PORT);
 			os = new DataOutputStream(clientSocket.getOutputStream());
 			os.writeBytes(json);
-			System.out.println("Total nodes:" + NetworkDHTCrawler.nodes.size());
+			//System.out.println("Total nodes:" + NetworkDHTCrawler.nodes.size());
 			int i = 0;
 			is = clientSocket.getInputStream();
 			i = is.read(cbuf);
