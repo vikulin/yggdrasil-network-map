@@ -274,7 +274,7 @@ public class NetworkDHTCrawler {
 			i = is.read(cbuf);
 			sb.append(new String(Arrays.copyOf(cbuf, i)));
 			response = sb.toString();
-			System.out.println("Request:\n"+json+"\n"+"Response:\n"+response);
+			//System.out.println("Request:\n"+json+"\n"+"Response:\n"+response);
 			boolean exception=false;
 			do {
 				try {
