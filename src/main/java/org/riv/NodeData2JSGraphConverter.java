@@ -89,7 +89,7 @@ public class NodeData2JSGraphConverter {
 				}
 				Edge e = graph.addEdge(edgeId , ndp.getId()+"", toId+"");
 				e.setAttribute("layout.weight", 5);
-				System.out.println("added adge:"+edgeId);
+				//System.out.println("added adge:"+edgeId);
 			} else {
 				String reversedEdgeId = toId+"-"+ndp.getId();
 				if(graph.getEdge(reversedEdgeId)!=null) {
@@ -97,7 +97,7 @@ public class NodeData2JSGraphConverter {
 				}
 				Edge e = graph.addEdge(reversedEdgeId , toId+"", ndp.getId()+"");
 				e.setAttribute("layout.weight", 5);
-				System.out.println("added adge:"+reversedEdgeId);
+				//System.out.println("added adge:"+reversedEdgeId);
 			}
 			
 			/*try {
@@ -162,7 +162,7 @@ public class NodeData2JSGraphConverter {
 			for(int index = 0; index < edgesCount; index++) {
 				Edge edge = graph.getEdge(index);
 				String edgeString = String.format(Locale.ROOT, rowEdges, edge.getNode0().getId(), edge.getNode1().getId(), width);
-				System.out.println(edgeString);
+				//System.out.println(edgeString);
 				writer.append(edgeString);
 			}
 			
