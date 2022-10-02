@@ -189,12 +189,12 @@ public class NetworkDHTCrawler {
 			System.err.println("error response:\n" + selfInfoObject);
 			return null;
 		}
+		if(selfInfoReponse.getStatus().equals("error")){
+			System.err.println(selfInfoReponse.getError());
+			return null;
+		}
 		Entry<String, Map<String, Object>> selfNodeInfo = null;
-		if (selfInfoReponse != null && !selfInfoReponse.getResponse().isEmpty()) {
-			if(selfInfoReponse.getStatus().equals("error")){
-				System.out.println("error");
-				return null;
-			}
+		if (selfInfoReponse != null && selfInfoReponse.getResponse() != null && !selfInfoReponse.getResponse().isEmpty()) {
 			selfNodeInfo = selfInfoReponse.getResponse().entrySet().iterator().next();
 		}
 		return selfNodeInfo;
@@ -212,12 +212,11 @@ public class NetworkDHTCrawler {
 			System.err.println("error response:\n" + nodeInfoObject);
 			return null;
 		}
-		
-		if (nodeInfoReponse != null && !nodeInfoReponse.getResponse().isEmpty()) {
-			if(nodeInfoReponse.getStatus().equals("error")){
-				System.out.println("error");
-				return null;
-			}
+		if(nodeInfoReponse.getStatus().equals("error")){
+			System.err.println(nodeInfoReponse.getError());
+			return null;
+		}		
+		if (nodeInfoReponse != null && nodeInfoReponse.getResponse()!=null && !nodeInfoReponse.getResponse().isEmpty()) {
 			return nodeInfoReponse.getResponse().entrySet().iterator().next();
 		}
 		return null;

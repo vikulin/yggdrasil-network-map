@@ -4,6 +4,8 @@ public class ApiResponse {
 	
 	private String status;
 	
+	private String error;
+	
 	private ApiRequest request;
 	
 	public String getStatus() {
@@ -12,6 +14,14 @@ public class ApiResponse {
 
 	public void setStatus(String status) {
 		this.status = status;
+	}
+
+	public String getError() {
+		return error;
+	}
+
+	public void setError(String error) {
+		this.error = error;
 	}
 
 	public ApiRequest getRequest() {
