@@ -1,5 +1,6 @@
 package org.rivmesh.api;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -11,29 +12,33 @@ public class ApiRequest {
 	
 	public ApiRequest getPeers(String key){
 		map.put("request", "debug_remotegetpeers");
-		map.put("key", key);
-		map.put("keepalive", true);
+		Map<String, String> arguments = new HashMap<String, String>();
+		arguments.put("key", key);
+		map.put("arguments", arguments);
 		return this;
 	}
 	
 	public ApiRequest getNodeInfo(String key){
 		map.put("request", "getnodeinfo");
-		map.put("key", key);
-		map.put("keepalive", true);
+		Map<String, String> arguments = new HashMap<String, String>();
+		arguments.put("key", key);
+		map.put("arguments", arguments);
 		return this;
 	}
 	
 	public ApiRequest getDHT(String key){
 		map.put("request", "debug_remotegetdht");
-		map.put("key", key);
-		map.put("keepalive", true);
+		Map<String, String> arguments = new HashMap<String, String>();
+		arguments.put("key", key);
+		map.put("arguments", arguments);
 		return this;
 	}
 	
 	public ApiRequest getSelf(String key){
 		map.put("request", "debug_remotegetself");
-		map.put("key", key);
-		map.put("keepalive", true);
+		Map<String, String> arguments = new HashMap<String, String>();
+		arguments.put("key", key);
+		map.put("arguments", arguments);
 		return this;
 	}
 	
