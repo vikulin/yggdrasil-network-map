@@ -24,7 +24,7 @@ import org.riv.node.PeerInfo;
 
 public class ScheduleYggdrasilPeerReaderListener implements ServletContextListener {
 
-	private static final String PEERS_REPO_PATH = "C:\\Users\\Vadym.Server-PC\\git\\public-peers.git";
+	private static final String PEERS_REPO_PATH = "/opt/tomcat/public-peers";//"C:\\Users\\Vadym.Server-PC\\git\\public-peers.git";
 
 	public static final Map<String, LinkedHashMap<String, PeerInfo>> peersPerCountry = new TreeMap<String, LinkedHashMap<String, PeerInfo>>();
 
@@ -32,7 +32,7 @@ public class ScheduleYggdrasilPeerReaderListener implements ServletContextListen
 			"(((tcp)|(sctp)|(tls))\\://(((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)\\.){3}(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d))\\:\\d{1,5})");
 	Pattern IPv6_PEER_REGEXP = Pattern.compile(
 			"((tcp)|(sctp)|(tls))\\://\\[(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))\\]\\:\\d{1,5}");
-	Pattern DOMAIN_NAME_PEER_REGEXP = Pattern.compile("(((tcp)|(udp)|(tls))\\://([\\w\\-]+\\.)+[a-zA-Z]+\\:\\d{1,5})");
+	Pattern DOMAIN_NAME_PEER_REGEXP = Pattern.compile("(((tcp)|(sctp)|(tls))\\://([\\w\\-]+\\.)+[a-zA-Z]+\\:\\d{1,5})");
 
 	@Override
 	public void contextInitialized(ServletContextEvent arg0) {
