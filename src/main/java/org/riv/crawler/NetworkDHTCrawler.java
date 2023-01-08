@@ -93,7 +93,18 @@ public class NetworkDHTCrawler {
 				Map<String, RemotePeerResponse> peer = getRemotePeers(targetNodeKey);
 				Map<String, RemoteNodeInfoReponse> nodeInfoReponse = getRemoteNodeInfo(targetNodeKey);
 				Map<String, RemoteSelfReponse> selfNodeInfo = getRemoteSelf(targetNodeKey);
-				
+				if(peer==null) {
+					System.err.println("RemotePeerResponse is null, target key="+targetNodeKey);
+					return null;
+				}	
+				if(nodeInfoReponse==null) {
+					System.err.println("RemoteNodeInfoReponse is null, target key="+targetNodeKey);
+					return null;
+				}
+				if(selfNodeInfo==null) {
+					System.err.println("RemoteSelfReponse is null, target key="+targetNodeKey);
+					return null;
+				}
 				String ip = peer.entrySet().iterator().next().getKey();
 				NodeDataPair ndp = nodes.get(targetNodeKey);//new NodeDataPair(ip, targetNodeKey);
 				ndp.setIp(ip);
@@ -157,7 +168,7 @@ public class NetworkDHTCrawler {
 	private Map<String, RemoteSelfReponse> getRemoteSelf(String targetNodeKey) throws IOException {
 		Type collectionType = new TypeToken<Map<String, RemoteSelfReponse>>(){}.getType();
 		
-		Map<String, RemoteSelfReponse> apiResponse = (Map<String, RemoteSelfReponse>) socketRequest("api/remote/self/"+targetNodeKey, collectionType);
+		Map<String, RemoteSelfReponse> apiResponse = (Map<String, RemoteSelfReponse>) restRequest("api/remote/self/"+targetNodeKey, collectionType);
 		
 		if (apiResponse == null) {
 			return null;
@@ -172,7 +183,7 @@ public class NetworkDHTCrawler {
 	private Map<String, RemoteNodeInfoReponse> getRemoteNodeInfo(String targetNodeKey) throws IOException {
 		Type collectionType = new TypeToken<Map<String, RemoteNodeInfoReponse>>(){}.getType();
 		
-		Map<String, RemoteNodeInfoReponse> apiResponse = (Map<String, RemoteNodeInfoReponse>) socketRequest("api/remote/nodeinfo/"+targetNodeKey, collectionType);
+		Map<String, RemoteNodeInfoReponse> apiResponse = (Map<String, RemoteNodeInfoReponse>) restRequest("api/remote/nodeinfo/"+targetNodeKey, collectionType);
 		
 		if (apiResponse == null) {
 			return null;
@@ -188,7 +199,7 @@ public class NetworkDHTCrawler {
 
 		Type collectionType = new TypeToken<Map<String, RemotePeerResponse>>(){}.getType();
 		
-		Map<String, RemotePeerResponse> apiResponse = (Map<String, RemotePeerResponse>) socketRequest("api/remote/peers/"+targetNodeKey, collectionType);
+		Map<String, RemotePeerResponse> apiResponse = (Map<String, RemotePeerResponse>) restRequest("api/remote/peers/"+targetNodeKey, collectionType);
 		if (apiResponse == null) {
 			return null;
 		}
@@ -199,13 +210,16 @@ public class NetworkDHTCrawler {
 		return apiResponse;
 	}
 
-	private Object socketRequest(String uri, Type collectionType) throws IOException {
+	private Object restRequest(String uri, Type collectionType) throws IOException {
 		String result = "";
 		InputStream is = null;
 		HttpURLConnection con = null;
 		try {
 			URL url = new URL("http://"+ADMIN_API_HOST+":"+ADMIN_API_PORT+"/"+uri);
 			con = (HttpURLConnection) url.openConnection();
+			con.setConnectTimeout(20000);
+			con.setReadTimeout(10000);
+			HttpURLConnection.setFollowRedirects(false);
 			con.setRequestMethod("GET");
 			con.setDoOutput(true);
 
