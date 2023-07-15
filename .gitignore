@@ -22,5 +22,23 @@
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 
+/node_modules/
 /target/
 /build/
+/dist/
+/bin/
+
+package-lock.json
+yarn.lock 
+
+.cache
+.parcel-cache
+.settings
+.classpath
+.project
+.hintrc
+.vscode
+
+#exclude TS generated distribution
+/WebContent/mesh/v2/
+
