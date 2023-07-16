@@ -165,7 +165,7 @@ public class NodeData2JSGraphConverter {
 		try (Writer statistic = new FileWriter(new File(dataPath, "statistic-peer-data.js"))) {
 			statistic.append(versionMapStart);
 			try (Writer writer = new FileWriter(new File(dataPath, "graph-peer-data.js"))) {
-				try (Writer csv = new FileWriter(new File(dataPath, "edges.csv"))) {
+				try (Writer csv = new FileWriter(new File(v2Path, "edges.csv"))) {
 					// writer.append(preTitle);
 					writer.append(beginEdges);
 					for (int index = 0; index < edgesCount; index++) {

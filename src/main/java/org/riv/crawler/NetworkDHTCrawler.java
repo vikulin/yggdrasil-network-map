@@ -58,30 +58,46 @@ public class NetworkDHTCrawler {
 	public static String getAdminApiPort(){
 		return config.getProperty("ADMIN_API_PORT");
 	}
+
+	public static String getMaxScanLevel(){
+		return config.getProperty("MAX_SCAN_LEVEL");
+	}
 	
 	private static final String MAP_HISTORY_PATH = "/opt/tomcat/yggdrasil-map-history";
 	//private static final String MAP_HISTORY_PATH = "C:\\Users\\Vadym\\git\\yggdrasil-network-map";
 	
 	private static final Logger log = LoggerFactory.getLogger(NetworkDHTCrawler.class);
 	
-	private static final String KEY_API_HOST = getKeyApiHost();// "323e321939b1b08e06b89b0ed8c57b09757f2974eba218887fdd68a45024d4c1";
+	private static final String KEY_API_HOST = getKeyApiHost();
 
 	private static final String ADMIN_API_HOST = getAdminApiHost();
 	
 	private static final int ADMIN_API_PORT = Integer.parseInt(getAdminApiPort());
 
+	private static final int MAX_SCAN_LEVEL = Integer.parseInt(getMaxScanLevel());
+
 	private static SortedMap<String, NodeDataPair> nodes; // node key, ip nodes
+	
 	private static SortedSet<Link> links; // node key, ip links
-	public static Gson gson = new Gson();
 	
 	private static ExecutorService threadPool = null;
 
-	private Future<String> runTask(String targetNodeKey) {
+	public Gson gson = new Gson();
+
+	private Future<String> runTask(String targetNodeKey, final int level) {
 		
 		Future<String> future = threadPool.submit(new Callable<String>() {
 			
 			@Override
 			public String call() throws Exception {
+
+				int currentLevel = level;
+				
+				currentLevel++;
+
+				if(currentLevel>MAX_SCAN_LEVEL){
+					return null;
+				}
 				
 				log.info("found: " + nodes.size() + " records");
 				if (NetworkDHTCrawler.nodes.get(targetNodeKey) != null) {
@@ -148,7 +164,7 @@ public class NetworkDHTCrawler {
 						continue;
 					}
 					//Thread.sleep(1000);
-					tasks.add(NetworkDHTCrawler.this.runTask(peerKey));
+					tasks.add(NetworkDHTCrawler.this.runTask(peerKey, currentLevel));
 					//System.out.println("Total links:" + links.size());
 				}
 				for(Future<String> task: tasks) {
@@ -236,14 +252,17 @@ public class NetworkDHTCrawler {
 			return gson.fromJson(result, collectionType);
 			
 		} catch (java.net.ConnectException e) {
-			e.printStackTrace();
 			System.out.println(result);
+			e.printStackTrace();
 		} catch (java.net.SocketException e) {
-			e.printStackTrace();
 			System.out.println(result);
+			e.printStackTrace();
+		} catch (IOException e) {
+			System.out.println(result);
+			System.out.println(e.getMessage());
 		} catch (Exception e) {
-			e.printStackTrace();
 			System.out.println(result);
+			e.printStackTrace();
 		} finally {
 			if(is!=null) {
 				is.close();
@@ -264,7 +283,7 @@ public class NetworkDHTCrawler {
 
 		NetworkDHTCrawler crawler = new NetworkDHTCrawler();
 
-		Future<String> future = crawler.runTask(KEY_API_HOST);
+		Future<String> future = crawler.runTask(KEY_API_HOST, 0);
 		future.get();
 		threadPool.shutdownNow();
 		/*
