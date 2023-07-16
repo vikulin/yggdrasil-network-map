@@ -22,7 +22,7 @@ import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.riv.node.PeerInfo;
 
-public class ScheduleYggdrasilPeerReaderListener implements ServletContextListener {
+public class SchedulePeerReaderListener implements ServletContextListener {
 
 	private static final String PEERS_REPO_PATH = "/opt/tomcat/public-peers";//"C:\\Users\\Vadym.Server-PC\\git\\public-peers.git";
 

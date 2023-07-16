@@ -13,10 +13,10 @@
 		<welcome-file>default.jsp</welcome-file>
 	</welcome-file-list>
 	<listener>
-		<listener-class>listener.ScheduleYggdrasilNetworkMapListener</listener-class>
+		<listener-class>listener.ScheduleNetworkMapListener</listener-class>
 	</listener>
 	<listener>
-		<listener-class>listener.ScheduleYggdrasilPeerReaderListener</listener-class>
+		<listener-class>listener.SchedulePeerReaderListener</listener-class>
 	</listener>
 	<servlet>
 		<servlet-name>RiV-mesh Service</servlet-name>

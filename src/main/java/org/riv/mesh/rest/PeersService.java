@@ -15,7 +15,7 @@ import org.riv.node.PeerInfo;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import listener.ScheduleYggdrasilPeerReaderListener;
+import listener.SchedulePeerReaderListener;
 
 @Path("/peers.json")
 public class PeersService {
@@ -25,7 +25,7 @@ public class PeersService {
     @GET
     @Produces({MediaType.APPLICATION_JSON})
     public Response getPeers() {
-    	Map<String, LinkedHashMap<String, PeerInfo>> map = ScheduleYggdrasilPeerReaderListener.peersPerCountry;
+    	Map<String, LinkedHashMap<String, PeerInfo>> map = SchedulePeerReaderListener.peersPerCountry;
         return Response.status(Status.OK).entity(gson.toJson(map)).build();
     }
 

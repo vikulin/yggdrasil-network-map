@@ -293,7 +293,7 @@ public class NetworkDHTCrawler {
 	public static void main(String args[])
 			throws InterruptedException, ExecutionException, IOException, ClassNotFoundException {
 		System.out.println(new File(".").toPath());
-		run(".");
+		run(".", ".");
 		/*
 		NetworkDHTCrawler crawler = new NetworkDHTCrawler();
 		//String json = "{\"keepalive\":true,\"key\":\"fb370bd6ec82c46f57973ec0d4e26d9c1af8692107cb9a0936f5e258775a014f\",\"request\":\"debug_remotegetpeers\"}\n";
