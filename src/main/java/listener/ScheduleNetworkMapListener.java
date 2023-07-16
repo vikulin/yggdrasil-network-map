@@ -11,7 +11,7 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
-public class ScheduleYggdrasilNetworkMapListener implements ServletContextListener {
+public class ScheduleNetworkMapListener implements ServletContextListener {
 	
 	private static Properties config = new Properties();
 	
@@ -37,10 +37,11 @@ public class ScheduleYggdrasilNetworkMapListener implements ServletContextListen
 		public void contextInitialized(ServletContextEvent arg0) {
 	 		ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor();
 	 		final String dataPath = arg0.getServletContext().getRealPath("mesh/data");
+			final String v2Path = arg0.getServletContext().getRealPath("mesh/v2");
 	 		System.out.println("saved data in:"+dataPath);
 		 	Runnable task = () -> {
 				try {
-					org.riv.crawler.NetworkDHTCrawler.run(dataPath);
+					org.riv.crawler.NetworkDHTCrawler.run(dataPath, v2Path);
 				} catch (ClassNotFoundException | InterruptedException | ExecutionException | IOException e) {
 					e.printStackTrace();
 				}

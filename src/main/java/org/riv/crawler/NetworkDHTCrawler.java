@@ -256,7 +256,7 @@ public class NetworkDHTCrawler {
 		return null;
 	}
 
-	public static void run(String dataPath)
+	public static void run(String dataPath, String v2Path)
 			throws InterruptedException, ExecutionException, IOException, ClassNotFoundException {
 		threadPool = Executors.newWorkStealingPool(12);
 		nodes = new ConcurrentSkipListMap<String, NodeDataPair>();
@@ -282,7 +282,7 @@ public class NetworkDHTCrawler {
 
 		try {
 			System.out.println("Nodes:" + nodes.size() + " Links:" + links.size());
-			NodeData2JSGraphConverter.createPeerGraphJs(nodes, links, dataPath);
+			NodeData2JSGraphConverter.createPeerGraphJs(nodes, links, dataPath, v2Path);
 			NodeData2JSGraphConverter.createSpanningTreeGraphJs(nodes, dataPath);
 		} catch (Exception e) {
 			e.printStackTrace();
