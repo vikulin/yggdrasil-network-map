@@ -3,8 +3,11 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>riv-mesh-network-map</groupId>
 	<artifactId>riv-mesh-network-map</artifactId>
-	<version>0.5.0.1-SNAPSHOT</version>
+	<version>0.6.0.0-SNAPSHOT</version>
 	<packaging>war</packaging>
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
 	<repositories>
 		<repository>
 			<id>maven</id>
@@ -21,22 +24,22 @@
 			<url>http://repository.springsource.com/maven/bundles/external</url>
 		</repository>
 	</repositories>
-	<dependencies>		<!-- https://mvnrepository.com/artifact/com.google.code.gson/gson -->
+	<dependencies>
 		<dependency>
 			<groupId>com.google.code.gson</groupId>
 			<artifactId>gson</artifactId>
 			<version>2.8.9</version>
-		</dependency>		<!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-api -->
+		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
 			<version>1.7.32</version>
-		</dependency>		<!-- https://mvnrepository.com/artifact/commons-io/commons-io -->
+		</dependency>
 		<dependency>
 			<groupId>commons-io</groupId>
 			<artifactId>commons-io</artifactId>
 			<version>2.11.0</version>
-		</dependency>		<!-- https://mvnrepository.com/artifact/com.google.collections/google-collections -->
+		</dependency>
 		<dependency>
 			<groupId>com.google.collections</groupId>
 			<artifactId>google-collections</artifactId>
@@ -77,7 +80,7 @@
 			<groupId>org.glassfish.jersey.media</groupId>
 			<artifactId>jersey-media-json-jackson</artifactId>
 			<version>2.29.1</version>
-		</dependency>		<!-- escape quotes -->
+		</dependency>
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-text</artifactId>
@@ -93,20 +96,51 @@
 		<finalName>ROOT</finalName>
 		<plugins>
 			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-clean-plugin</artifactId>
+				<version>3.3.1</version>
+				<configuration>
+					<filesets>
+						<fileset>
+							<directory>WebContent/mesh/v2</directory>
+							<includes>
+								<include>**/*</include>
+							</includes>
+							<followSymlinks>false</followSymlinks>
+						</fileset>
+					</filesets>
+				</configuration>
+			</plugin>
+			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>exec-maven-plugin</artifactId>
-				<version>3.0.0</version>
+				<version>3.1.0</version>
 				<executions>
 					<execution>
-						<!-- Run our version calculation script -->
-						<id>Buld web TS</id>
-						<phase>package</phase>
+						<!-- Run install for TypeScript-->
+						<id>Install dependencies for TS</id>
+						<phase>process-resources</phase>
 						<goals>
 							<goal>exec</goal>
 						</goals>
 						<configuration>
-							<executable>yarn</executable>
+							<executable>npm</executable>
 							<arguments>
+								<argument>install</argument>
+							</arguments>
+						</configuration>
+					</execution>
+					<execution>
+						<!-- Run build for TypeScript-->
+						<id>Buld web TS</id>
+						<phase>compile</phase>
+						<goals>
+							<goal>exec</goal>
+						</goals>
+						<configuration>
+							<executable>npm</executable>
+							<arguments>
+								<argument>run</argument>
 								<argument>build</argument>
 							</arguments>
 						</configuration>
@@ -115,14 +149,14 @@
 			</plugin>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.8.0</version>
+				<version>3.11.0</version>
 				<configuration>
 					<release>11</release>
 				</configuration>
 			</plugin>
 			<plugin>
 				<artifactId>maven-war-plugin</artifactId>
-				<version>3.2.3</version>
+				<version>3.4.0</version>
 				<configuration>
 					<warSourceDirectory>WebContent</warSourceDirectory>
 				</configuration>
