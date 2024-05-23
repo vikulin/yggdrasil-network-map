@@ -1,0 +1,27 @@
+{
+  "name": "riv-mesh-map",
+  "version": "0.6.0",
+  "description": "RiV-mesh map",
+  "scripts": {
+    "start": "parcel ./src/main/ts/index.html",
+    "build": "parcel build ./src/main/ts/index.html --public-url . --dist-dir ./WebContent/mesh/v2"
+  },
+  "dependencies": {
+    "@cosmograph/cosmos": "1.3.0",
+    "csv-parser": "^3.0.0"
+  },
+  "devDependencies": {
+    "parcel": "^2.9.3",
+    "typescript": "^5.1.6"
+  },
+  "resolutions": {
+    "@babel/preset-env": "7.13.8"
+  },
+  "keywords": [
+    "network",
+    "force graph",
+    "webgl",
+    "simulation",
+    "data visualization"
+  ]
+}

@@ -1,17 +1,16 @@
 package org.riv.crawler;
 
-import java.io.DataOutputStream;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.Socket;
-import java.util.Arrays;
-
-import java.util.Iterator;
+import java.io.InputStreamReader;
+import java.lang.reflect.Type;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Map.Entry;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.concurrent.Callable;
@@ -26,16 +25,14 @@ import java.util.concurrent.Future;
 import org.riv.NodeData2JSGraphConverter;
 import org.riv.node.Link;
 import org.riv.node.NodeDataPair;
-import org.rivmesh.api.ApiNodeInfoResponse;
-import org.rivmesh.api.ApiPeersResponse;
-import org.rivmesh.api.ApiRequest;
-import org.rivmesh.api.ApiResponse;
-import org.rivmesh.api.ApiSelfResponse;
+import org.riv.node.RemoteNodeInfoReponse;
+import org.riv.node.RemotePeerResponse;
+import org.riv.node.RemoteSelfReponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
+import com.google.gson.reflect.TypeToken;
 
 public class NetworkDHTCrawler {
 	
@@ -61,30 +58,46 @@ public class NetworkDHTCrawler {
 	public static String getAdminApiPort(){
 		return config.getProperty("ADMIN_API_PORT");
 	}
+
+	public static String getMaxScanLevel(){
+		return config.getProperty("MAX_SCAN_LEVEL");
+	}
 	
 	private static final String MAP_HISTORY_PATH = "/opt/tomcat/yggdrasil-map-history";
 	//private static final String MAP_HISTORY_PATH = "C:\\Users\\Vadym\\git\\yggdrasil-network-map";
 	
 	private static final Logger log = LoggerFactory.getLogger(NetworkDHTCrawler.class);
 	
-	private static final String KEY_API_HOST = getKeyApiHost();// "323e321939b1b08e06b89b0ed8c57b09757f2974eba218887fdd68a45024d4c1";
+	private static final String KEY_API_HOST = getKeyApiHost();
 
 	private static final String ADMIN_API_HOST = getAdminApiHost();
 	
 	private static final int ADMIN_API_PORT = Integer.parseInt(getAdminApiPort());
 
+	private static final int MAX_SCAN_LEVEL = Integer.parseInt(getMaxScanLevel());
+
 	private static SortedMap<String, NodeDataPair> nodes; // node key, ip nodes
+	
 	private static SortedSet<Link> links; // node key, ip links
-	public static Gson gson = new Gson();
 	
 	private static ExecutorService threadPool = null;
 
-	private Future<String> runTask(String targetNodeKey) {
+	public Gson gson = new Gson();
+
+	private Future<String> runTask(String targetNodeKey, final int level) {
 		
 		Future<String> future = threadPool.submit(new Callable<String>() {
 			
 			@Override
 			public String call() throws Exception {
+
+				int currentLevel = level;
+				
+				currentLevel++;
+
+				if(currentLevel>MAX_SCAN_LEVEL){
+					return null;
+				}
 				
 				log.info("found: " + nodes.size() + " records");
 				if (NetworkDHTCrawler.nodes.get(targetNodeKey) != null) {
@@ -93,63 +106,54 @@ public class NetworkDHTCrawler {
 					nodes.put(targetNodeKey, new NodeDataPair(null, null));
 				}
 
-				Entry<String, Map<String, List<String>>> peer = getPeerInfo(targetNodeKey);
-				Entry<String, Map<String, Object>> nodeInfoReponse = getNodeInfo(targetNodeKey);
-				Entry<String, Map<String, Object>> selfNodeInfo = getSelf(targetNodeKey);
-				
-				String ip = null;
-				if(peer!=null) {
-					ip = peer.getKey();
-				} else {
-					if(selfNodeInfo!=null) {
-						ip = selfNodeInfo.getKey();
-					} else {
-						if(nodeInfoReponse!=null) {
-							ip = nodeInfoReponse.getKey();
-						}
-					}
+				Map<String, RemotePeerResponse> peer = getRemotePeers(targetNodeKey);
+				Map<String, RemoteNodeInfoReponse> nodeInfoReponse = getRemoteNodeInfo(targetNodeKey);
+				Map<String, RemoteSelfReponse> selfNodeInfo = getRemoteSelf(targetNodeKey);
+				if(peer==null) {
+					System.err.println("RemotePeerResponse is null, target key="+targetNodeKey);
+					return null;
+				}	
+				if(nodeInfoReponse==null) {
+					System.err.println("RemoteNodeInfoReponse is null, target key="+targetNodeKey);
+					return null;
 				}
+				if(selfNodeInfo==null) {
+					System.err.println("RemoteSelfReponse is null, target key="+targetNodeKey);
+					return null;
+				}
+				String ip = peer.entrySet().iterator().next().getKey();
 				NodeDataPair ndp = nodes.get(targetNodeKey);//new NodeDataPair(ip, targetNodeKey);
 				ndp.setIp(ip);
 				ndp.setKey(targetNodeKey);
 				
-				if (nodeInfoReponse != null) {
-					
-					Object buildarch = nodeInfoReponse.getValue().get("buildarch");
-					Object buildplatform = nodeInfoReponse.getValue().get("buildplatform");
-					Object buildversion = nodeInfoReponse.getValue().get("buildversion");
-					Object name = nodeInfoReponse.getValue().get("name");
-					Object icon = nodeInfoReponse.getValue().get("icon");
-					if (buildarch != null) {
-						ndp.setArch(buildarch.toString());
-					}
-					if (buildplatform != null) {
-						ndp.setPlatform(buildplatform.toString());
-					}
-					if (buildversion != null) {
-						ndp.setVersion(buildversion.toString());
-					}
-					if (name != null) {
-						ndp.setName(name.toString());
-					}
-					if (icon != null) {
-						ndp.setIcon(icon.toString());
-					}
+				String buildarch = nodeInfoReponse.entrySet().iterator().next().getValue().getBuildarch();
+				String buildplatform = nodeInfoReponse.entrySet().iterator().next().getValue().getBuildplatform();
+				String buildversion = nodeInfoReponse.entrySet().iterator().next().getValue().getBuildversion();
+				String name = nodeInfoReponse.entrySet().iterator().next().getValue().getName();
+				String icon = nodeInfoReponse.entrySet().iterator().next().getValue().getIcon();
+				if (buildarch != null) {
+					ndp.setArch(buildarch);
+				}
+				if (buildplatform != null) {
+					ndp.setPlatform(buildplatform);
+				}
+				if (buildversion != null) {
+					ndp.setVersion(buildversion);
+				}
+				if (name != null) {
+					ndp.setName(name);
+				}
+				if (icon != null) {
+					ndp.setIcon(icon);
 				}
 				
-				if(selfNodeInfo!=null) {
-					String coords = selfNodeInfo.getValue().get("coords").toString();
-					String coordsString = coords.substring(1, coords.length()-1);
-					ndp.setCoords(coordsString);
-				}
+				String coords = selfNodeInfo.entrySet().iterator().next().getValue().getCoords();
+				String coordsString = coords.substring(1, coords.length()-1);
+				ndp.setCoords(coordsString);
 				
-				//nodes.put(targetNodeKey, ndp);
-				if(peer==null) {
-					return null;
-				}
-				List<String> peerKeys = peer.getValue().get("keys");
+				List<String> peerKeys = peer.values().iterator().next().getKeys();
 				if(peerKeys==null) {
-					System.err.println(peer.getKey()+" returned no peers");
+					System.err.println(peer.keySet().iterator().next()+" returned no peers");
 					return null;
 				}
 				ConcurrentLinkedQueue<Future<String>> tasks = new ConcurrentLinkedQueue<Future<String>>();
@@ -160,8 +164,8 @@ public class NetworkDHTCrawler {
 						continue;
 					}
 					//Thread.sleep(1000);
-					tasks.add(NetworkDHTCrawler.this.runTask(peerKey));
-					System.out.println("Total links:" + links.size());
+					tasks.add(NetworkDHTCrawler.this.runTask(peerKey, currentLevel));
+					//System.out.println("Total links:" + links.size());
 				}
 				for(Future<String> task: tasks) {
 					try {
@@ -177,140 +181,101 @@ public class NetworkDHTCrawler {
 		return future;
 	}
 	
-	private Entry<String, Map<String, Object>> getSelf(String targetNodeKey) throws IOException {
-		String selfInfo = new ApiRequest().getSelf(targetNodeKey).serialize();
-		String selfInfoObject = socketRequest(selfInfo);
+	private Map<String, RemoteSelfReponse> getRemoteSelf(String targetNodeKey) throws IOException {
+		Type collectionType = new TypeToken<Map<String, RemoteSelfReponse>>(){}.getType();
 		
-		ApiSelfResponse selfInfoReponse = null;
-		try {
-			selfInfoReponse = gson.fromJson(selfInfoObject, ApiSelfResponse.class);
-		} catch (JsonSyntaxException e) {
-			e.printStackTrace();
-			System.err.println("error response:\n" + selfInfoObject);
-			return null;
-		}
-		Entry<String, Map<String, Object>> selfNodeInfo = null;
-		if (selfInfoReponse != null && !selfInfoReponse.getResponse().isEmpty()) {
-			if(selfInfoReponse.getStatus().equals("error")){
-				System.out.println("error");
-				return null;
-			}
-			selfNodeInfo = selfInfoReponse.getResponse().entrySet().iterator().next();
-		}
-		return selfNodeInfo;
-	}
-	
-	private Entry<String, Map<String, Object>> getNodeInfo(String targetNodeKey) throws IOException {
-		String nodeInfo = new ApiRequest().getNodeInfo(targetNodeKey).serialize();
-		String nodeInfoObject = socketRequest(nodeInfo);
+		Map<String, RemoteSelfReponse> apiResponse = (Map<String, RemoteSelfReponse>) restRequest("api/remote/self/"+targetNodeKey, collectionType);
 		
-		ApiNodeInfoResponse nodeInfoReponse = null;
-		try {
-			nodeInfoReponse = gson.fromJson(nodeInfoObject, ApiNodeInfoResponse.class);
-		} catch (JsonSyntaxException e) {
-			e.printStackTrace();
-			System.err.println("error response:\n" + nodeInfoObject);
-			return null;
-		}
-		
-		if (nodeInfoReponse != null && !nodeInfoReponse.getResponse().isEmpty()) {
-			if(nodeInfoReponse.getStatus().equals("error")){
-				System.out.println("error");
-				return null;
-			}
-			return nodeInfoReponse.getResponse().entrySet().iterator().next();
-		}
-		return null;
-	}
-	
-	private Entry<String, Map<String, List<String>>> getPeerInfo(String targetNodeKey) throws IOException {
-
-		final String json = new ApiRequest().getPeers(targetNodeKey).serialize();
-		
-		String object = socketRequest(json);
-		if (object == null) {
-			return null;
-		}
-		ApiResponse apiResponse = null;
-		try {
-			apiResponse = gson.fromJson(object, ApiResponse.class);
-		} catch (JsonSyntaxException e) {
-			e.printStackTrace();
-			System.err.println("error response:\n" + object);
-			return null;
-		}
 		if (apiResponse == null) {
-			System.out.println("No response received");
+			return null;
 		}
+		if (apiResponse.values().isEmpty()) {
+			log.info("incorrect response: " + gson.toJson(apiResponse));
+			return null;
+		}
+		return apiResponse;
+	}
+	
+	private Map<String, RemoteNodeInfoReponse> getRemoteNodeInfo(String targetNodeKey) throws IOException {
+		Type collectionType = new TypeToken<Map<String, RemoteNodeInfoReponse>>(){}.getType();
 		
-		if(apiResponse.getStatus().equals("error")){
-			System.out.println("error");
+		Map<String, RemoteNodeInfoReponse> apiResponse = (Map<String, RemoteNodeInfoReponse>) restRequest("api/remote/nodeinfo/"+targetNodeKey, collectionType);
+		
+		if (apiResponse == null) {
 			return null;
 		}
-		ApiPeersResponse apiPeerResponse = gson.fromJson(object, ApiPeersResponse.class);
-		if (apiPeerResponse.getResponse().entrySet().isEmpty()) {
-			log.info("incorrect response: " + gson.toJson(apiPeerResponse));
+		if (apiResponse.values().isEmpty()) {
+			log.info("incorrect response: " + gson.toJson(apiResponse));
 			return null;
 		}
-		Iterator<Entry<String, Map<String, List<String>>>> it = apiPeerResponse.getResponse().entrySet().iterator();
-		Entry<String, Map<String, List<String>>> peer = it.next();
-		return peer;
+		return apiResponse;
+	}
+	
+	private Map<String, RemotePeerResponse> getRemotePeers(String targetNodeKey) throws IOException {
+
+		Type collectionType = new TypeToken<Map<String, RemotePeerResponse>>(){}.getType();
+		
+		Map<String, RemotePeerResponse> apiResponse = (Map<String, RemotePeerResponse>) restRequest("api/remote/peers/"+targetNodeKey, collectionType);
+		if (apiResponse == null) {
+			return null;
+		}
+		if (apiResponse.values().isEmpty()) {
+			log.info("incorrect response: " + gson.toJson(apiResponse));
+			return null;
+		}
+		return apiResponse;
 	}
 
-	private String socketRequest(String json) throws IOException {
-		String response = null;
-		byte[] cbuf = new byte[1024*64];
-		Socket clientSocket = null;
-		DataOutputStream os = null;
+	private Object restRequest(String uri, Type collectionType) throws IOException {
+		String result = "";
 		InputStream is = null;
-		StringBuilder sb = new StringBuilder();
+		HttpURLConnection con = null;
 		try {
-			clientSocket = new Socket(ADMIN_API_HOST, ADMIN_API_PORT);
-			os = new DataOutputStream(clientSocket.getOutputStream());
-			os.writeBytes(json);
-			System.out.println("Total nodes:" + NetworkDHTCrawler.nodes.size());
-			int i = 0;
-			is = clientSocket.getInputStream();
-			i = is.read(cbuf);
-			sb.append(new String(Arrays.copyOf(cbuf, i)));
-			response = sb.toString();
-			System.out.println("Request:\n"+json+"\n"+"Response:\n"+response);
-			boolean exception=false;
-			do {
-				try {
-					gson.fromJson(response, ApiResponse.class);
-				} catch (JsonSyntaxException e) {
-					exception = true;
-					e.printStackTrace();
-					i = is.read(cbuf);
-					sb.append(new String(Arrays.copyOf(cbuf, i)));
-					response = sb.toString();
-					continue;
-				}
-				exception = false;
-			} while(exception);
+			URL url = new URL("http://"+ADMIN_API_HOST+":"+ADMIN_API_PORT+"/"+uri);
+			con = (HttpURLConnection) url.openConnection();
+			con.setConnectTimeout(20000);
+			con.setReadTimeout(10000);
+			HttpURLConnection.setFollowRedirects(false);
+			con.setRequestMethod("GET");
+			con.setDoOutput(true);
+
+			is = con.getInputStream();
+			
+			BufferedReader in = new BufferedReader(
+					  new InputStreamReader(is));
+					String inputLine;
+					StringBuffer content = new StringBuffer();
+					while ((inputLine = in.readLine()) != null) {
+					    content.append(inputLine);
+					}
+			result = content.toString();
+			return gson.fromJson(result, collectionType);
+			
 		} catch (java.net.ConnectException e) {
+			System.out.println(result);
 			e.printStackTrace();
 		} catch (java.net.SocketException e) {
+			System.out.println(result);
 			e.printStackTrace();
+		} catch (IOException e) {
+			System.out.println(result);
+			System.out.println(e.getMessage());
 		} catch (Exception e) {
+			System.out.println(result);
 			e.printStackTrace();
 		} finally {
-			if(os!=null) {
-				os.close();
-			}
 			if(is!=null) {
 				is.close();
 			}
-			if(clientSocket!=null) {
-				clientSocket.close();
+			if(con!=null) {
+				con.disconnect();
 			}
 		}
 		
-		return response;
+		return null;
 	}
 
-	public static void run(String dataPath)
+	public static void run(String dataPath, String v2Path)
 			throws InterruptedException, ExecutionException, IOException, ClassNotFoundException {
 		threadPool = Executors.newWorkStealingPool(12);
 		nodes = new ConcurrentSkipListMap<String, NodeDataPair>();
@@ -318,7 +283,7 @@ public class NetworkDHTCrawler {
 
 		NetworkDHTCrawler crawler = new NetworkDHTCrawler();
 
-		Future<String> future = crawler.runTask(KEY_API_HOST);
+		Future<String> future = crawler.runTask(KEY_API_HOST, 0);
 		future.get();
 		threadPool.shutdownNow();
 		/*
@@ -336,7 +301,7 @@ public class NetworkDHTCrawler {
 
 		try {
 			System.out.println("Nodes:" + nodes.size() + " Links:" + links.size());
-			NodeData2JSGraphConverter.createPeerGraphJs(nodes, links, dataPath);
+			NodeData2JSGraphConverter.createPeerGraphJs(nodes, links, dataPath, v2Path);
 			NodeData2JSGraphConverter.createSpanningTreeGraphJs(nodes, dataPath);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -347,7 +312,7 @@ public class NetworkDHTCrawler {
 	public static void main(String args[])
 			throws InterruptedException, ExecutionException, IOException, ClassNotFoundException {
 		System.out.println(new File(".").toPath());
-		run(".");
+		run(".", ".");
 		/*
 		NetworkDHTCrawler crawler = new NetworkDHTCrawler();
 		//String json = "{\"keepalive\":true,\"key\":\"fb370bd6ec82c46f57973ec0d4e26d9c1af8692107cb9a0936f5e258775a014f\",\"request\":\"debug_remotegetpeers\"}\n";

@@ -1,12 +1,20 @@
-<!DOCTYPE html>
-<html lang="en">
+<html lang="en"><meta name="viewport" content="width=device-width, initial-scale=1">
 <head>
-<meta http-equiv="content-type" content="text/html; charset=UTF8" />
+<meta charset=utf-8 />
 <link rel="shortcut icon" href="favicon.ico" type="image/x-icon"/>
-<title>Yggdrasil v0.4.0.3 network map</title>
+<title>RiV-mesh v0.5.0.1 network map</title>
 
 <script type="text/javascript" src="js/vis-network.min.js"></script>
-<script type="text/javascript" src="data/graph-tree-data.js"></script>
+
+<script type="text/javascript" src="data/graph-peer-data.js"></script>
+<script type="text/javascript" src="data/statistic-peer-data.js"></script>
+
+<!-- DEBUG -->
+<link rel="stylesheet" type="text/css" href="style/orb-1.0.9.min.css" />
+<script type="text/javascript" src="js/react-0.12.2.js"></script>
+<script type="text/javascript" src="js/orb-1.0.9.min.js"></script>
+<!-- ***** -->
+
 
 <style type="text/css">
 #mynetwork {
@@ -20,7 +28,7 @@
 .box {
 	position: relative;
 	display: flex;
-	width: 365px;
+	width: 385px;
 	z-index: 9;
 	font: 10pt sans-serif;
 }
@@ -28,7 +36,7 @@
 .box2 {
 	position: relative;
 	float: left;
-	width: 360px;
+	width: 380px;
 	padding: 5px 5px 0px;
 	border: 1px solid solid lightgray;
 	background-color: rgba(220, 220, 220, 0.7);
@@ -52,8 +60,8 @@
 
 <body style="background-color: #272b30;">
 	<div class='box3'>
-		<form action="index.html">
-		    <input type="submit" value="Peers View" />
+		<form action="tree.html">
+		    <input type="submit" value="Spanning Tree View" />
 		</form>
 	</div>
 	<div class='box'>
@@ -69,10 +77,14 @@
 		<div id="ipNodeInfo" class='box2'></div>
 	</div>
 	<div class='box'>
+		<div id="versionInfo" class='box2'></div>
+	</div>	
+	<div class='box'>
 		<div id="mapInfo" class='box2'></div>
 	</div>
 
 	<script type="text/javascript">
+		
 		var statusUpdateSpan;
 		var offsetx, offsety, scale, positionx, positiony, duration, easingFunction, doButton, focusButton, showButton;
 
@@ -103,6 +115,7 @@
 				return minutes + 'min ' + seconds + 'sec';
 			}
 		}
+		
 	</script>
 	<div id="mynetwork"></div>
 
@@ -120,7 +133,86 @@
 				+ nodesNumber.toString() + '<br>Links:'
 				+ linksNumber.toString() + '<br>Generated:'
 				+ deltaTime.toHHMMSS() + ' ago';
+		
+		 var config = {
+			        dataSource: window.demo.data,
+			        canMoveFields: true, 
+			        dataHeadersLocation: 'columns',
+			        width: 370,
+			        height: 500,
+			        toolbar: {
+			            visible: false
+			        },
+			        grandTotal: {
+			            rowsvisible: false,
+			            columnsvisible: false
+			        },
+			        subTotal: {
+			            visible: true,
+			            collapsed: true,
+			            collapsible: true
+			        },
+			        rowSettings: {
+			            subTotal: {
+			                visible: true,
+			                collapsed: true,
+			                collapsible: true
+			            }
+			        },
+			        columnSettings: {
+			            subTotal: {
+			                visible: false,
+			                collapsed: true,
+			                collapsible: true
+			            }
+			        },
+			        fields: [
+			            {
+			                name: '0',
+			                caption: 'IPv6',
+			                aggregateFunc: 'count',
+			            },
+			            {
+			                name: '1',
+			                caption: 'Name',
+			                aggregateFunc: 'count',
+			            },
+			            {
+			                name: '2',
+			                caption: 'Version',
+			                sort: {
+			                    order: 'asc'
+			                },
+			                rowSettings: {
+			                    subTotal: {
+			                        visible: true,
+			                        collapsed: true,
+			                        collapsible: true
+			                    }
+			                },
+			            },
+			            {
+			                name: '3',
+			                caption: 'OS',
+			                aggregateFunc: 'count',
+			            },
+			            {
+			                name: '4',
+			                caption: 'Arch',
+			                aggregateFunc: 'count',
+			            },
+			        ],
+			        rows    : [ 'Version' ],
+			        columns : [  ],
+			        data    : [ 'IPv6' ],
+			    };
 
+				var versionInfo = document.getElementById("versionInfo");
+			    
+			    var pgridwidget = new orb.pgridwidget(config);
+			    pgridwidget.render(versionInfo);
+		
+		
 		function redrawAll() {
 			var container = document.getElementById("mynetwork");
 			var options = {

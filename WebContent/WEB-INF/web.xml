@@ -13,10 +13,10 @@
 		<welcome-file>default.jsp</welcome-file>
 	</welcome-file-list>
 	<listener>
-		<listener-class>listener.ScheduleYggdrasilNetworkMapListener</listener-class>
+		<listener-class>listener.ScheduleNetworkMapListener</listener-class>
 	</listener>
 	<listener>
-		<listener-class>listener.ScheduleYggdrasilPeerReaderListener</listener-class>
+		<listener-class>listener.SchedulePeerReaderListener</listener-class>
 	</listener>
 	<servlet>
 		<servlet-name>RiV-mesh Service</servlet-name>
@@ -27,9 +27,17 @@
 		</init-param>	
 		<load-on-startup>1</load-on-startup>
 	</servlet>
+	<servlet>
+		<servlet-name>RiV-mesh Redirect</servlet-name>
+		<servlet-class>org.riv.servlet.ClearnetRedirectServlet</servlet-class>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
 	<servlet-mapping>
 		<servlet-name>RiV-mesh Service</servlet-name>
 		<url-pattern>/rest/*</url-pattern>
 	</servlet-mapping>
-
+	<servlet-mapping>
+		<servlet-name>RiV-mesh Redirect</servlet-name>
+		<url-pattern>/index.html</url-pattern>
+	</servlet-mapping>
 </web-app>

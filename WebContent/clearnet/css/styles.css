@@ -1,0 +1,487 @@
+/* Description: Master CSS file */
+
+/*****************************************
+Table Of Contents:
+
+- General Styles
+- Particles.js Container
+- Header
+- Media Queries
+******************************************/
+
+/*****************************************
+Colors:
+
+- Buttons - red #f04551 
+- Heading text, icons - black #30292a
+- Body text - gray #585f63
+******************************************/
+
+
+/**************************/
+/*     General Styles     */
+/**************************/
+body,
+html {
+    width: 100%;
+	height: 100%;
+}
+
+body, p {
+	color: #585f63; 
+	font: 400 1rem/1.625rem "Open Sans", sans-serif;
+}
+
+h1 {
+	color: #30292a;
+	font-weight: 700;
+	font-size: 2.5rem;
+	line-height: 3.25rem;
+}
+
+h2 {
+	color: #30292a;
+	font-weight: 700;
+	font-size: 2rem;
+	line-height: 2.625rem;
+}
+
+h3 {
+	color: #30292a;
+	font-weight: 700;
+	font-size: 1.5rem;
+	line-height: 2.25rem;
+}
+
+h4 {
+	color: #30292a;
+	font-weight: 700;
+	font-size: 1.25rem;
+	line-height: 1.75rem;
+}
+
+h5 {
+	color: #30292a;
+	font-weight: 700;
+	font-size: 1.125rem;
+	line-height: 1.625rem;
+}
+
+h6 {
+	color: #30292a;
+	font-weight: 700;
+	font-size: 1rem;
+	line-height: 1.5rem;
+}
+
+.p-large {
+	font-size: 1.25rem;
+	line-height: 1.875rem;
+}
+
+a {
+	color: #585f63;
+	text-decoration: underline;
+}
+
+a:hover {
+	color: #585f63;
+	text-decoration: underline;
+}
+
+.btn-solid-reg {
+	display: inline-block;
+	padding: 1.375rem 2.25rem 1.375rem 2.25rem;
+	border: 1px solid #c167ef;
+	border-radius: 32px;
+	background-color: #c167ef;
+	color: #ffffff;
+	font-weight: 600;
+	font-size: 0.875rem;
+	line-height: 0;
+	text-decoration: none;
+	transition: all 0.2s;
+}
+
+.btn-solid-reg:hover {
+	border: 1px solid #c167ef;
+	background-color: transparent;
+	color: #c167ef;
+	text-decoration: none;
+}
+
+.btn-solid-lg {
+	display: inline-block;
+	padding: 1.625rem 2.625rem 1.625rem 2.625rem;
+	border: 1px solid #c167ef;
+	border-radius: 32px;
+	background-color: #c167ef;
+	color: #ffffff;
+	font-weight: 600;
+	font-size: 0.875rem;
+	line-height: 0;
+	text-decoration: none;
+	transition: all 0.2s;
+}
+
+.btn-solid-lg:hover {
+	border: 1px solid #c167ef;
+	background-color: transparent;
+	color: #c167ef;
+	text-decoration: none;
+}
+
+.btn-outline-reg {
+	display: inline-block;
+	padding: 1.375rem 2.25rem 1.375rem 2.25rem;
+	border: 1px solid #30292a;
+	border-radius: 32px;
+	background-color: transparent;
+	color: #30292a;
+	font-weight: 600;
+	font-size: 0.875rem;
+	line-height: 0;
+	text-decoration: none;
+	transition: all 0.2s;
+}
+
+.btn-outline-reg:hover {
+	border: 1px solid #30292a;
+	background-color: #30292a;
+	color: #ffffff;
+	text-decoration: none;
+}
+
+.btn-outline-lg {
+	display: inline-block;
+	padding: 1.625rem 2.625rem 1.625rem 2.625rem;
+	border: 1px solid #30292a;
+	border-radius: 32px;
+	background-color: transparent;
+	color: #30292a;
+	font-weight: 600;
+	font-size: 0.875rem;
+	line-height: 0;
+	text-decoration: none;
+	transition: all 0.2s;
+}
+
+.btn-outline-lg:hover {
+	border: 1px solid #30292a;
+	background-color: #30292a;
+	color: #ffffff;
+	text-decoration: none;
+}
+
+.btn-outline-sm {
+	display: inline-block;
+	padding: 1rem 1.625rem 1rem 1.625rem;
+	border: 1px solid #30292a;
+	border-radius: 32px;
+	background-color: transparent;
+	color: #30292a;
+	font-weight: 600;
+	font-size: 0.875rem;
+	line-height: 0;
+	text-decoration: none;
+	transition: all 0.2s;
+}
+
+.btn-outline-sm:hover {
+	border: 1px solid #30292a;
+	background-color: #30292a;
+	color: #ffffff;
+	text-decoration: none;
+}
+
+.form-group {
+	position: relative;
+	margin-bottom: 1.25rem;
+}
+
+.label-control {
+	position: absolute;
+	top: 1rem;
+	left: 2rem;
+	color: #585f63;
+	opacity: 1;
+	font-size: 0.875rem;
+	line-height: 1.375rem;
+	cursor: text;
+	transition: all 0.2s ease;
+}
+
+.form-control-input:focus + .label-control,
+.form-control-input.notEmpty + .label-control,
+.form-control-textarea:focus + .label-control,
+.form-control-textarea.notEmpty + .label-control {
+	top: 0.125rem;
+	opacity: 1;
+	font-size: 0.75rem;
+	font-weight: 700;
+}
+
+.form-control-input,
+.form-control-select {
+	display: block; /* needed for proper display of the label in Firefox, IE, Edge */
+	width: 100%;
+	padding-top: 1.125rem;
+	padding-bottom: 0.375rem;
+	padding-left: 1.875rem;
+	border: 1px solid #c4d8dc;
+	border-radius: 32px;
+	background-color: #ffffff;
+	color: #30292a;
+	font-size: 0.875rem;
+	line-height: 1.875rem;
+	transition: all 0.2s;
+	-webkit-appearance: none; /* removes inner shadow on form inputs on ios safari */
+}
+
+.form-control-select {
+	padding-top: 0.5rem;
+	padding-bottom: 0.5rem;
+	height: 3rem;
+}
+
+select {
+    /* you should keep these first rules in place to maintain cross-browser behavior */
+    -webkit-appearance: none;
+	-moz-appearance: none;
+	-ms-appearance: none;
+    -o-appearance: none;
+    appearance: none;
+    background-image: url('../images/down-arrow.png');
+    background-position: 96% 50%;
+    background-repeat: no-repeat;
+    outline: none;
+}
+
+.form-control-textarea {
+	display: block; /* used to eliminate a bottom gap difference between Chrome and IE/FF */
+	width: 100%;
+	height: 14rem; /* used instead of html rows to normalize height between Chrome and IE/FF */
+	padding-top: 1.5rem;
+	padding-left: 1.875rem;
+	border: 1px solid #c4d8dc;
+	border-radius: 0;
+	background-color: #ffffff;
+	color: #30292a;
+	font-size: 0.875rem;
+	line-height: 1.75rem;
+	transition: all 0.2s;
+}
+
+.form-control-input:focus,
+.form-control-select:focus,
+.form-control-textarea:focus {
+	border: 1px solid #a1a1a1;
+	outline: none; /* removes blue border on focus */
+}
+
+.form-control-input:hover,
+.form-control-select:hover,
+.form-control-textarea:hover {
+	border: 1px solid #a1a1a1;
+}
+
+input[type='checkbox'] {
+	vertical-align: -10%;
+	margin-right: 0.5rem;
+}
+
+.form-control-submit-button {
+	display: inline-block;
+	width: 100%;
+	height: 3.5rem;
+	border: 1px solid #f04551;
+	border-radius: 32px;
+	background-color: #f04551;
+	color: #ffffff;
+	font-weight: 600;
+	font-size: 0.875rem;
+	line-height: 0;
+	cursor: pointer;
+	transition: all 0.2s;
+}
+
+.form-control-submit-button:hover {
+	border: 1px solid #f04551;
+	background-color: transparent;
+	color: #f04551;
+}
+
+
+/**********************************/
+/*     Particles.js Container     */
+/**********************************/
+canvas {
+	display: block;
+	vertical-align: bottom;
+}
+
+#particles-js {
+	position: fixed;
+	z-index: -1;
+	width: 100%;
+	height: 100%;
+	background-color: #000;
+	background-image: url("../images/header-background.jpg");
+	background-repeat: no-repeat;
+	background-size: cover;
+	background-position: 50% 50%;
+}
+
+
+/******************/
+/*     Header     */
+/******************/
+.header {
+	position: relative;
+	min-height: 100%;
+	padding-top: 5rem;
+	text-align: center;
+}
+
+.header .logo-image {
+	width: 208px;
+	margin-bottom: 2.5rem;
+}
+
+.header .logo-text {
+	display: block;
+	margin-bottom: 3rem;
+	color: #f04551;
+	font-size: 4rem;
+	text-decoration: none;
+}
+
+.header .text-container {
+	margin-bottom: 8rem;
+}
+
+.header h1 {
+	margin-bottom: 0.875rem;
+}
+
+.header .p-large {
+	margin-bottom: 2.75rem;
+}
+
+.header .social-container {
+	position: absolute;
+	right: 0;
+	bottom: 1rem;
+	left: 0;
+}
+
+.header .fa-stack {
+	width: 2em;
+	margin-bottom: 0.75rem;
+	margin-right: 0.375rem;
+	font-size: 1.25rem;
+}
+
+.header .social-container .fa-stack:last-child {
+	margin-right: 0;
+}
+
+.header .fa-stack .fa-stack-1x {
+    color: #30292a;
+	transition: all 0.2s ease;
+}
+
+.header .fa-stack .fa-stack-2x {
+	color: #ffffff;
+	transition: all 0.2s ease;
+}
+
+.header .fa-stack:hover .fa-stack-1x {
+    color: #ffffff;
+}
+
+.header .fa-stack:hover .fa-stack-2x {
+	color: #30292a;
+}
+
+
+/*************************/
+/*     Media Queries     */
+/*************************/	
+/* Min-width 768px */
+@media (min-width: 768px) {
+
+	/* General Styles */
+	h1 {
+		font-size: 3rem;
+		line-height: 3.75rem;
+	}
+	/* end of general styles */
+
+
+	/* Header */
+	.header {
+		display: flex;
+		align-items: center;
+		flex-direction: column;
+		justify-content: center;
+	}
+
+	.header .logo-image {
+		width: 288px;
+	}
+
+	.header .logo-text {
+		margin-bottom: 5rem;
+		font-size: 6rem;
+	}
+
+	.header .form-group {
+		max-width: 22rem;
+		display: inline-block;
+		vertical-align: top;
+	}
+	
+	.header .form-control-input {
+		width: 22rem;
+		border-top-right-radius: 0;
+		border-bottom-right-radius: 0;
+	}
+
+	.header .form-control-submit-button {
+		width: 10rem;
+		margin-left: -0.375rem;
+		border-top-left-radius: 0;
+		border-bottom-left-radius: 0;
+	}
+	/* end of header */
+}
+/* end of min-width 768px */
+
+
+/* Min-width 992px */
+@media (min-width: 992px) {
+	
+	/* Header */
+	.header .text-container {
+		width: 872px;
+		margin-right: auto;
+		margin-left: auto;
+	}
+	/* end of header */
+}
+/* end of min-width 992px */
+
+
+/* Min-width 1200px */
+@media (min-width: 1200px) {
+
+	/* Header */
+	.header h1 {
+		font-size: 3.625rem;
+		line-height: 4.5rem;
+		letter-spacing: -0.4px;
+	}
+	/* end of header */
+}
+/* end of min-width 1200px */
